@@ -1,0 +1,157 @@
+Phlute:
+* Kind of a side project that I think will be useful in a number of PHP projects.
+* A project that takes XML and generates a PHP class file.
+* Readme:
+    @begin=plain@
+        Phlute is a single-file PHP script that generates a set of PHP class files based on an XML template.
+        
+        It's basically just a run-of-the-mill code generator.  I found that I was typing in a lot of stuff repeatedly, so I thought it would be a whole lot easier if I just outline classes in XML and generate them.
+
+        This helps map out larger projects, so I can think of them more conceptually instead of spending a lot of time typing code.
+
+        It's just for initial creation.  Not for modifying existing files.
+
+        THERE IS NO TEST.  Sorry.
+
+        Why is it called "Phlute"?  Because I'm terrible at naming things.
+    @end=plain@
+* Okay, I'll need an outline now.
+* I've got an idea of what I want the xml to look like.
+
+* Okay, I'm at the point where I want to actually start building a file.
+    * I was originally thinking about collecting everything into an object first, but now I'm thinking I'll just build the file while going through the nodes.
+
+* I'm building the file, but I'm trying to think if there's a way to abstract some of this code.
+    * Okay, yeah, I definitely am thinking that.
+    * I think I want another class to take in the class node and filepath, as a constructor.  Then it builds the individual parts.
+
+* I'm much closer, but I'm realizing something about the indentation in the docblocks.
+    * I need to strip the whitespace, then break apart the statements into lines.
+    * I'm wondering if I handled something like this in saute.
+        * I did not.  All docblocks were completely hardcoded.
+    * So, I need a function that:
+        * Takes in a string.
+        * Strips whitespace from that string
+        * Replaces all \n\s+ with a space, but preserves empty lines.
+        * Loop until no string left to process
+            * Adds the appropriate indentation whitespace.
+            * Adds ` * `
+            * Finds the first whitespace to the left of the 80-char mark.
+            * Removes substring(0,<whitespacepos>) and adds it to an array.
+* I think I'm going to have to abstract a little more than I originally thought.  This is becoming extraordinarily complicated.
+    * Three more classes-- PropertyBuilder, FunctionBuilder, DocblockBuilder.
+    * Then some functions common to all of them.
+    + FileWriter
+        * This one's new.  These different classes definitely need to be able to actually manage appending to the file.
+        + Update ClassBuilder to create FileWriter object.
+        + Update ClassBuilder to use FileWriter object to write to file.
+    + DocblockBuilder
+        * This is going to need to have the FileWriter object passed to it.
+        @begin=php@<?
+            // The way I want it to work:
+
+            $docBuilder = new DocblockBuilder($this->getFileWriter(), 0); // 0 is indent.
+
+            // Description.
+            $desc = getImmediateChildrenByName($this->getClassNode(), 'doc')[0]->nodeValue;
+            $docBuilder->setDesc($desc);
+
+            // Author, if applicable.
+            $author = $this->getClassNode()->getAttribute('author');
+            if ($author) {
+                $docBuilder->addAttribute('author', [$author]);
+            }
+
+            try {
+                $docBuilder->write();
+            } catch (\Throwable $t) {
+                print_r("Found error in " . $this->pullClassName() . ': ' . $t->getMessage());
+                die();
+            }
+        ?>@end=php@
+        * How many columns are there for the attributes?
+            * There's the one like @param.  That's the type.
+            * Then there's the second one that's the data type for @param, but can be other things.
+            * Then there's the third one that's the name of the variable.
+            * Then there's the fourth one that's the description.  This one's going to go on the next line.
+    + PropertyBuilder
+    + MethodBuilder
+        * This can't really just take in a method element, because it needs to be more versatile than that.
+            * There won't be method elements for getters and setters.
+        * That said, I'm really cutting myself off at the knees in terms of versatility if I don't.
+            * If/when I make changes later, it will be *much* better to be able to only make those changes in the FunctionBuilder class.
+        * Okay, I genuinely at this point think that the best thing to do here would be to actually dynamically build a function element to pass to make getters and setters.
+        + Write function.
+            * All done except for content.
+                * If no content defined, add 'todo' comment.  Else add content.
+            * Content is actually going to be a pain, because I need to make sure that the spacing is right.
+                * I was going to say break apart the lines into arrays, but one huge problem is the first line.
+                * I think the only way I can do this correctly is to treat the first line specially.
+            * Here's what I want to do:
+                * Break data into array by line break.
+                * Remove ^\<\? from first line.
+                * Remove \?\>$ from last line.
+                * Find the smallest amount of space at the beginning of each line, *excluding* the first line, because that's going to be very short.
+                * Trim every line (except the first) by that amount.
+                * Remove first and last line iff they are empty strings.
+                * Insert each line, with appropriate indent level.
+            * The above will mean that source XML files cannot mix tabs and space.
+                * The more I think about it, this whole thing pretty much assumes only spaces in both XML and resulting PHP.
+                * Well, I guess that's fine.
+        + Abstract CData to separate class.
+        + Add option for private or protected function.
+    + Return to PropertyBuilder
+        * The PropertyBuilder class itself needs to be what creates the getters and setters.  It'll just be easiest that way.
+        * So, it'll need to instantiate FunctionBuilder.
++ Fix no private functions.
+    * Not sure what I missed, but private functions are not being written as private.
+    * Because I added the function and never actually set anything.
++ If writing line of just spaces to file, make it just an empty line.
+    * Right now, I'm indenting some empty lines inside functions.
++ Traits
++ Remove extra space before closing of class.
+    * I think I want to do this by not adding the line in the first place.
+    * And I think the way to do that is to not add the blank line at the end of a function.
+    * Which means that I want to add the blank line at the beginning of a function.
+    * Which means that I want to not add one of the blank lines that I'm adding before all the functions.
+    * But, wait-- I'm not writing a blank line after every function.
+        * Oh, yes, I am.
++ Figure out how to get the content elements to be syntax-highlighted for PHP in Vim.
+    * I'm kind of wondering if this is a problem that's already been resolved.  Maybe not putting PHP in CDATA is common, but the very nature of CDATA suggests that maybe Vim would want to add this feature.
+    * https://stackoverflow.com/questions/2713353/how-to-syntax-highlight-xml-in-cdata-elements-in-vim
+        * Okay, this is wrong.
+    * To find out where syntax files are:
+        * `echo $VIMRUNTIME`
+    * Okay, I did this by making a modified XML syntax highlighter file and setting a modeline.
+
+Things I want to come back to:
+* Basically stuff that I want to do, but not yet because I'll get overwhelmed.
+> 'extends' attribute.
+> buildDirectory needs to check `output` attribute before using the default value.
+> Corresponding test files
+    * I think I want it to simply create one test file for each method and mark test as incomplete.
+> Extra docblock
+    * For the phpunit note.
+> abstract classes
+> abstract functions
+> static functions
+> static properties
+> Constants
+    * Probably just make them child elements of the properties element, and just make them an options of the Property object.
+> interfaces
+> If information is small enough, docblock needs to go on one line.
+> Public properties
+> 'throws" attribute for functions.
+> Different return values for docblock in functions.
+> Signature needs to be multiline if too long.
+> Pass by reference.
+> Custom setters and getters.
+    * Since the whole point of setters and getters is to make them more versatile for doing other things.
+> Property doc attribute needs to optionally be a doc child element.
+> nullable properties
+    * Basically just means type attribute will start with '?' in input and replaced by <type>|null in docblock.
+> Variant return types.
+    * If return type of property is variant or contains a '|', then don't enforce a type.
+> Namespaced docblock types.
+    * If input or return type matches one of the 'use' statements, handle accordingly.
+    * i.e., in docblocks it needs to be fully-qualified, but in signatures it shouldn't be.

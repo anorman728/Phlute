@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- vi:set syntax=phml: -->
+<phlute default-output="/var/www/html/src/Lib">
+    <class name="MyClass" author="Andrew Norman" namespace="App\Lib">
+        <doc>This is my class.  There are many like it, but this one is mine.</doc>
+        <uses>
+            <use value="App\Model\DbClass"/>
+            <use value="App\Model\MyTrait"/>
+        </uses>
+        <traits>
+            <trait value='MyTrait'/>
+            <trait value='YourTrait'/>
+            <trait value='OurTrait'/>
+        </traits>
+        <properties>
+            <property type="int" name="count" default="1" doc="The count."/>
+            <property type="string" setter="0" name="name" doc="The name of the object."/>
+        </properties>
+        <methods>
+            <public>
+                <method return="void" name="__construct">
+                    <doc>The constructor.</doc>
+                    <input type="string" name="name" desc='The name'/>
+                </method>
+                <method return="int" name="increment">
+                    <doc>Increment the count</doc>
+                    <content><![CDATA[<?
+                        if ($this->count > 10) {
+                            $this->count = 0;
+                        }
+
+                        return ++$this->count;
+                    ?>]]></content>
+                </method>
+                <method return="void" name="view">
+                    <doc>View name</doc>
+                    <content><![CDATA[<?php print_r($this->getName()); ?>]]></content>
+                </method>
+            </public>
+            <private>
+                <method return="void" name="secretfunction">
+                    <doc>Not an accessible function.</doc>
+                </method>
+            </private>
+        </methods>
+    </class>
+</phlute>
