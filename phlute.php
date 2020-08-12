@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+
 /**
  * Main class to handle XML files and generate output.
  *
@@ -1578,7 +1579,7 @@ function addPseudoTab(string $input): string
 
 if (!isset($argv[1])) {
     print("Missing input xml file.\n");
-    exit();
+    // Don't want to exit, because test files are going to be using this.
+} else {
+    (new Main($argv[1]))->run();
 }
-
-(new Main($argv[1]))->run();

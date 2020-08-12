@@ -1,0 +1,9 @@
+All tests for Phlute are manual.  It's difficult to automate these tests, as they're essentially all view and no model.  Run the test, and make sure the output actually looks correct.
+
+They're also not completely exhaustive.
+
+They also use the old-fashioned include_once commands.  For the unusual nature of this project, it didn't make much sense to me to use an autoloader.
+
+The test-setup.php is included in each test file.  $outputfile needs to be defined before test-setup.php can be included, and test-setup will build $outputfileFull, which will be needed for making FileWriter objects.
+
+(I like to have phlute.php executable, but use the php command to call the test files.)

@@ -126,6 +126,16 @@ Phlute:
 
 Things I want to come back to:
 * Basically stuff that I want to do, but not yet because I'll get overwhelmed.
+> tests
+    + FileWriter
+    + DocblockBuilder
+    + CDataHandler
+    > MethodBuilder
+    > PropertyBuilder
+> Preprocess the xml, line by line, to allow php tags.
+    * In the example, create <php>...</php> tags.
+    * *Before* it's loaded into DOMDocument, take out those lines, replace with an element like <php ref="arraynumber"/>.  This is the preprocessing.
+    * When actually building the file, find those lines when come to that reference.
 > 'extends' attribute.
 > buildDirectory needs to check `output` attribute before using the default value.
 > Corresponding test files
@@ -155,3 +165,5 @@ Things I want to come back to:
 > Namespaced docblock types.
     * If input or return type matches one of the 'use' statements, handle accordingly.
     * i.e., in docblocks it needs to be fully-qualified, but in signatures it shouldn't be.
+> Added comment for // todo and markasincomplete.
+    * Because I want to put //dmz1 in there.
