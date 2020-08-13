@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- vi:set syntax=phml: -->
-<phlute default-output="/var/www/html/src/Lib">
+<phlute default-output="./output">
     <class name="MyClass" author="Andrew Norman" namespace="App\Lib">
         <doc>This is my class.  There are many like it, but this one is mine.</doc>
         <uses>

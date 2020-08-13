@@ -132,7 +132,7 @@ Things I want to come back to:
     + CDataHandler
     + MethodBuilder
     + PropertyBuilder
-> Move tests to subfolder.
++ Move tests to subfolder.
     * I think I should be able to do this by only editing test-setup.php.
 - Preprocess the xml, line by line, to allow php tags.
     * In the example, create <php>...</php> tags.
@@ -142,21 +142,24 @@ Things I want to come back to:
         * It could potentially be *extremely* irritating with text editors, and things like pygmentize.
         * The two primary advantages are being able to have ]]> in PHP (which almost never happens) and typing less for PHP blocks, which isn't really that big a deal.
     --I think that for the time being, I want to ignore this.
-> Search the input text for too many `]]>`.
++ Search the input text for too many `]]>`.
     * Give warning (probably exception) if find more instances of `]]>` than `<![CDATA[`.
     * Or maybe some regex?  Basically cannot have any instance of two closing after one opening, and if that's found I'm going to assume it's because ]]> is accidentally put in PHP.
-> 'extends' attribute.
+        * This would probably be better, but it would be much easier to just count them.
 > buildDirectory needs to check `output` attribute before using the default value.
+> If directory does not exist, create it.
 > Corresponding test files
-    * I think I want it to simply create one test file for each method and mark test as incomplete.
+    * I think I want it to simply create one test file for each public method and mark test as incomplete.
 > Extra docblock
     * For the phpunit note.
+> 'extends' attribute.
 > abstract classes
 > abstract functions
 > static functions
 > static properties
 > Constants
     * Probably just make them child elements of the properties element, and just make them an options of the Property object.
+    * No, not quite-- Make the tag name `constant`.
 > interfaces
 > If information is small enough, docblock needs to go on one line.
 > Public properties

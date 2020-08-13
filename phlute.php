@@ -79,6 +79,8 @@ class Main
     {
         $filecontent = file_get_contents($inputpath);
 
+        $this->checkInvalidCData($filecontent);
+
         $dom = new DOMDocument();
         $dom->preserveWhiteSpace = false;
         $success = $dom->loadXml($filecontent);
@@ -138,6 +140,27 @@ class Main
     private function buildDirectory(DOMElement $classNode): string
     {
         return $this->getDefaultOutputDir();
+    }
+
+    /**
+     * Check for invalid CData, i.e., if there is a mismatch between the amount
+     * of <![CDATA[ and ]]> found.  Throw exception if a problem is found.
+     *
+     * @param   string  $content
+     * @return  void
+     * @throws  Exception           If mismatch found.
+     */
+    private function checkInvalidCData(string $content)
+    {
+        $open = substr_count($content, '<![CDATA[');
+        $close = substr_count($content, ']]>');
+
+        if ($open != $close) {
+            throw new Exception("Found mismatch in the amount of"
+            . " '<![CDATA[' compared to ']]>'.  If ']]>' is used anywhere in"
+            . " PHP code, it needs to be removed!  (You can just add a space"
+            . " after the second ].");
+        }
     }
 
 }
