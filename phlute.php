@@ -530,6 +530,7 @@ class FileWriter
             FILE_APPEND
         );
     }
+
 }
 
 /**
@@ -1143,7 +1144,7 @@ class PropertyBuilder extends ElementBuilder
         $el->appendChild($input);
 
         $contentContainer = $domDum->createElement('content');
-        $content = $domDum->createCDATASection('$this->' . $name . '= $input;');
+        $content = $domDum->createCDATASection('$this->' . $name . ' = $input;');
         $contentContainer->appendChild($content);
         $el->appendChild($contentContainer);
 

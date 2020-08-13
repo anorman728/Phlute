@@ -126,16 +126,24 @@ Phlute:
 
 Things I want to come back to:
 * Basically stuff that I want to do, but not yet because I'll get overwhelmed.
-> tests
++ tests
     + FileWriter
     + DocblockBuilder
     + CDataHandler
-    > MethodBuilder
-    > PropertyBuilder
-> Preprocess the xml, line by line, to allow php tags.
+    + MethodBuilder
+    + PropertyBuilder
+> Move tests to subfolder.
+- Preprocess the xml, line by line, to allow php tags.
     * In the example, create <php>...</php> tags.
     * *Before* it's loaded into DOMDocument, take out those lines, replace with an element like <php ref="arraynumber"/>.  This is the preprocessing.
     * When actually building the file, find those lines when come to that reference.
+    ! I'm glad I didn't do this right away, because I'm seriously starting to think about the possible ramifications of this.
+        * It could potentially be *extremely* irritating with text editors, and things like pygmentize.
+        * The two primary advantages are being able to have ]]> in PHP (which almost never happens) and typing less for PHP blocks, which isn't really that big a deal.
+    --I think that for the time being, I want to ignore this.
+> Search the input text for too many `]]>`.
+    * Give warning (probably exception) if find more instances of `]]>` than `<![CDATA[`.
+    * Or maybe some regex?  Basically cannot have any instance of two closing after one opening, and if that's found I'm going to assume it's because ]]> is accidentally put in PHP.
 > 'extends' attribute.
 > buildDirectory needs to check `output` attribute before using the default value.
 > Corresponding test files
