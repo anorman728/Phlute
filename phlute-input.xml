@@ -44,4 +44,7 @@
             </private>
         </methods>
     </class>
+    <class name="MyClass2" author="Andrew Norman" namespace="App\Lib\MyNamespace" output="./output/MyNamespace">
+        <doc>Subspace.</doc>
+    </class>
 </phlute>

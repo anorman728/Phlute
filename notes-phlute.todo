@@ -146,6 +146,12 @@ Things I want to come back to:
     * Give warning (probably exception) if find more instances of `]]>` than `<![CDATA[`.
     * Or maybe some regex?  Basically cannot have any instance of two closing after one opening, and if that's found I'm going to assume it's because ]]> is accidentally put in PHP.
         * This would probably be better, but it would be much easier to just count them.
++ Things that need to be optional
+    * Meaning they won't cause exception to be thrown.
+    + Uses
+    + Traits
+    + Properties
+    + Methods
 > buildDirectory needs to check `output` attribute before using the default value.
 > If directory does not exist, create it.
 > Corresponding test files

@@ -336,6 +336,11 @@ class ClassBuilder
     {
         $usesElement = $this->getClassNode()->getElementsByTagName('uses')->item(0);
 
+        if (is_null($usesElement)) {
+            // If there isn't a usesElement, do nothing.
+            return;
+        }
+
         foreach ($usesElement->childNodes as $el) {
             $this->getFileWriter()->appendToFile('use ' . $el->getAttribute('value') . ';');
         }
@@ -395,7 +400,12 @@ class ClassBuilder
      */
     private function appendTraits()
     {
-        $traits = getImmediateChildrenByName($this->getClassNode(), 'traits')[0];
+        $traits = getFirstImmediateChildByName($this->getClassNode(), 'traits');
+
+        if (is_null($traits)) {
+            // If nothing provided, then do nothing.
+            return;
+        }
 
         foreach (getImmediateChildrenByName($traits, 'trait') as $trait) {
             $this->getFileWriter()->appendToFile(
@@ -414,8 +424,14 @@ class ClassBuilder
      */
     private function appendProperties()
     {
+        $properties = getFirstImmediateChildByName($this->getClassNode(), 'properties');
+
+        if (is_null($properties)) {
+            // If nothing provided, then do nothing.
+            return;
+        }
+
         $propertiesArr = [];
-        $properties = getImmediateChildrenByName($this->getClassNode(), 'properties')[0];
 
         // Collect all properties into array.
         foreach ($properties->childNodes as $childNode) {
@@ -451,10 +467,15 @@ class ClassBuilder
      */
     private function appendMethods()
     {
-        $allMethods = getImmediateChildrenByName($this->getClassNode(), 'methods')[0];
+        $allMethods = getFirstImmediateChildByName($this->getClassNode(), 'methods');
+
+        if (is_null($allMethods)) {
+            // Nothing provided, so do nothing.
+            return;
+        }
 
         foreach (['public', 'protected', 'private'] as $group) {
-            $methodParentObject = getImmediateChildrenByName($allMethods, $group)[0] ?? null;
+            $methodParentObject = getFirstImmediateChildByName($allMethods, $group);
 
             if (is_null($methodParentObject)) {
                 // User did not define any of this type of method.
@@ -1548,7 +1569,7 @@ function buildIndent(int $indentlvl): string
 /**
  * Find all *immediate* children of an element of a particular name.
  *
- * @param   DOMElement  $node
+ * @param   DOMNode     $node
  * @param   string      $name
  * @return  array
  */
@@ -1564,6 +1585,25 @@ function getImmediateChildrenByName(DOMNode $node, string $name): array
     }
 
     return $returnArr;
+}
+
+/**
+ * Find the first *immediate* child by of en element of a particular name.
+ * Return null if there aren't any.
+ *
+ * @param   DOMNode         $node
+ * @param   string          $name
+ * @return  DOMNode|null
+ */
+function getFirstImmediateChildByName(DOMNode $node, string $name)
+{
+    $dumarr = getImmediateChildrenByName($node, $name);
+
+    if (count($dumarr) == 0) {
+        return null;
+    }
+
+    return $dumarr[0];
 }
 
 /**
