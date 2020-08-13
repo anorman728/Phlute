@@ -133,6 +133,7 @@ Things I want to come back to:
     + MethodBuilder
     + PropertyBuilder
 > Move tests to subfolder.
+    * I think I should be able to do this by only editing test-setup.php.
 - Preprocess the xml, line by line, to allow php tags.
     * In the example, create <php>...</php> tags.
     * *Before* it's loaded into DOMDocument, take out those lines, replace with an element like <php ref="arraynumber"/>.  This is the preprocessing.
