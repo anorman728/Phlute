@@ -23,4 +23,6 @@ It's written in PHP because I have a rule that I write code generators in the la
 
 All testing is manual, but there are scripts that help.  There's not a whole lot that I can do to change that, from a practical perspective, due the the unusual nature of the project.
 
+I do everything in Linux systems, so sorry if it doesn't work as well for Windows systems.
+
 Why is it called "Phlute"?  Because I'm terrible at naming things.

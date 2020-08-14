@@ -139,6 +139,12 @@ class Main
      */
     private function buildDirectory(DOMElement $classNode): string
     {
+        $outputdum = $classNode->getAttribute('output');
+
+        if (strlen($outputdum) > 0) {
+            return $outputdum;
+        }
+
         return $this->getDefaultOutputDir();
     }
 
@@ -276,6 +282,7 @@ class ClassBuilder
         print_r("Writing " . $this->pullClassName() . " to file.\n");
 
         // Initiate.
+        $this->createDirectoryIfNeeded();
         $this->getFileWriter()->appendToFile('<?php');
 
         $this->appendNamespace();
@@ -503,6 +510,19 @@ class ClassBuilder
                 $methodBuilder->setVisibility($group);
                 $methodBuilder->write();
             }
+        }
+    }
+
+    /**
+     * Create the directory for the class, if it does not already exist.
+     *
+     * @return  void
+     */
+    private function createDirectoryIfNeeded()
+    {
+        if (!file_exists($this->getDirectoryPath())) {
+            // 0777 is default mode value.  Last arg is to make it recursive.
+            mkdir($this->getDirectoryPath(), 0777, true);
         }
     }
 

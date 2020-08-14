@@ -152,8 +152,8 @@ Things I want to come back to:
     + Traits
     + Properties
     + Methods
-> buildDirectory needs to check `output` attribute before using the default value.
-> If directory does not exist, create it.
++ buildDirectory needs to check `output` attribute before using the default value.
++ If directory does not exist, create it.
 > Corresponding test files
     * I think I want it to simply create one test file for each public method and mark test as incomplete.
 > Extra docblock
