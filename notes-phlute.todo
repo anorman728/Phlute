@@ -164,6 +164,46 @@ Things I want to come back to:
     --For the time being, at least, I'm canceling this.
 + Extra docblock
     * For the phpunit note.
++ Remove extra line from superdoc.
+    * This is basically just going to mean not adding the extra line if there are no attributes.
+> Macros
+    * I'm thinking this will be like preprocessor macros in C/C++.
+        * Except hopefully not verboten to use.
+    * Right now I'm thinking that the FileWriter may be what handles this?
+        * Or maybe a new class that's handled by the FileWriter.
+    * Probably basically just something that does a search and replace for each line being dumped into the file.
+    * I dunno, though.  The more I think about macros for the substitutions, the more it just doesn't really work that well.
+    * Well, now I think I have a better idea.  Basically, combine them into one.
+        * The macro def would have arguments, like $1, $2, etc.
+        * Calling the macro would be like {{mymac arg1 arg2}}.
+        * And there would be no need for arguments at all.
+        * This would allow both constants and substitutions in one.
+        @begin=xml@
+            <macros>
+                <def name="mymac">This is a macro.  This is $1, the first argument, and this is $2, the second argument.</def>
+            </macros>
+            <!-- Later in the code... -->
+            <method>
+                <doc>{{mymac function docblock}}</doc> <!-- The docblock of the function is "This is a macro.  This is function, the first argument, and this is docblock, the second argument." -->
+            </method>
+        @end=xml@
+    * This can't be done in the FileWriter, though, now that I think of it.
+        * I'm not sure where it needs to go, but it can't be in the FileWriter.  The file writer doesn't, and shouldn't, manage line breaks.  And macros can and should be able to have enough information that require a line break.
+        * But I also want it to be able to be used for function names and the like.
+        * Maybe it should *only* be accessible in docblocks?
+            * That makes sense to me, but there are a couple of issues here--
+                * Would require a lot of new parameters being passed (not that big a deal, but a mild irritation).
+                * The naming would be terrible.
+            * Overall, I don't think I like this idea.
+        ! Oh, no-- I need a new function to get a node's content.
+            * This is what makes most sense to me.  It does mean that it would only apply to content in a node, and not attributes, though.
+                * Which, ironically, means, just docblocks.  But it's what by far makes the most sense to me, from *both* a coding perspective and from an end-user perspective.
+                * And it wouldn't be *too* difficult to expand this to attributes if I wanted to.
+    - Constants
+        * Need to be able to define a constant somewhere and use them in multiple files.
+    - Substitutions
+        * Like, need to be able to put "This class {{classname}} has a unit test in {{location}}", and set that as a constant, and substitute regularly.
+    > As defined above.  They're both going to be the same.
 > 'extends' attribute.
 > abstract classes
 > abstract functions
@@ -192,28 +232,3 @@ Things I want to come back to:
 - Added comment for // todo and markasincomplete.
     * Because I want to put //dmz1 in there.
     --For the time being, I'm not doing automatic test files.
-> Macros
-    * I'm thinking this will be like preprocessor macros in C/C++.
-        * Except hopefully not verboten to use.
-    * Right now I'm thinking that the FileWriter may be what handles this?
-        * Or maybe a new class that's handled by the FileWriter.
-    * Probably basically just something that does a search and replace for each line being dumped into the file.
-    * I dunno, though.  The more I think about macros for the substitutions, the more it just doesn't really work that well.
-    * Well, now I think I have a better idea.  Basically, combine them into one.
-        * The macro def would have arguments, like $1, $2, etc.
-        * Calling the macro would be like {{mymac arg1 arg2}}.
-        * And there would be no need for arguments at all.
-        * This would allow both constants and substitutions in one.
-        @begin=xml@
-            <macros>
-                <def name="mymac">This is a macro.  This is $1, the first argument, and this is $2, the second argument.</def>
-            </macros>
-            <!-- Later in the code... -->
-            <method>
-                <doc>{{mymac function docblock}}</doc> <!-- The docblock of the function is "This is a macro.  This is function, the first argument, and this is docblock, the second argument." -->
-            </method>
-        @end=xml@
-    > Constants
-        * Need to be able to define a constant somewhere and use them in multiple files.
-    > Substitutions
-        * Like, need to be able to put "This class {{classname}} has a unit test in {{location}}", and set that as a constant, and substitute regularly.

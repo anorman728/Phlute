@@ -792,9 +792,11 @@ class DocblockBuilder
 
         $this->writeDescriptionToFile();
 
-        $this->addBlankLine();
+        if (count($this->getAttributeArrays()) != 0) {
+            $this->addBlankLine();
 
-        $this->writeAttributesToFile();
+            $this->writeAttributesToFile();
+        }
 
         $this->finalizeDocblock();
     }
