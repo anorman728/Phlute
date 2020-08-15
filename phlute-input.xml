@@ -2,6 +2,10 @@
 <!-- vi:set syntax=phml: -->
 <phlute default-output="./output">
     <class name="MyClass" author="Andrew Norman" namespace="App\Lib">
+        <superdocs>
+            <superdoc>This is a docblock that appears before the other docblock.  It's for extra notes that don't quite fit what the class docblock needs to be.</superdoc>
+            <superdoc>There can be multiple superdocs.</superdoc>
+        </superdocs>
         <doc>This is my class.  There are many like it, but this one is mine.</doc>
         <uses>
             <use value="App\Model\DbClass"/>
@@ -45,6 +49,8 @@
         </methods>
     </class>
     <class name="MyClass2" author="Andrew Norman" namespace="App\Lib\MyNamespace" output="./output/MyNamespace">
+        <superdocs>
+        </superdocs>
         <doc>Subspace.</doc>
     </class>
 </phlute>

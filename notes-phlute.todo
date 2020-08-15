@@ -154,9 +154,15 @@ Things I want to come back to:
     + Methods
 + buildDirectory needs to check `output` attribute before using the default value.
 + If directory does not exist, create it.
-> Corresponding test files
+- Corresponding test files
     * I think I want it to simply create one test file for each public method and mark test as incomplete.
-> Extra docblock
+    * Trying to think of the best way to do this.
+        * Creating a whole new ClassBuilder instance would be a mistake, of course.
+        ? But would it be a good idea to do this at all?
+            * I feel like it's enormously prone to error, and might actually be better to just design the test files as part of the overall design.
+            * Plus it would be an enormous pain.
+    --For the time being, at least, I'm canceling this.
++ Extra docblock
     * For the phpunit note.
 > 'extends' attribute.
 > abstract classes
@@ -183,5 +189,10 @@ Things I want to come back to:
 > Namespaced docblock types.
     * If input or return type matches one of the 'use' statements, handle accordingly.
     * i.e., in docblocks it needs to be fully-qualified, but in signatures it shouldn't be.
-> Added comment for // todo and markasincomplete.
+- Added comment for // todo and markasincomplete.
     * Because I want to put //dmz1 in there.
+    --For the time being, I'm not doing automatic test files.
+> Constants
+    * Need to be able to define a constant somewhere and use them in multiple files.
+> Substitutions
+    * Like, need to be able to put "This class {{classname}} has a unit test in {{location}}", and set that as a constant, and substitute regularly.

@@ -115,6 +115,9 @@ class Main
         print_r("Done.\n");
     }
 
+
+    // Helper functions below this line.
+
     /**
      * Build a class file.
      *
@@ -123,13 +126,10 @@ class Main
      * @param   DOMElement  $classNode
      * @return  void
      */
-    public function buildClassFile(DOMElement $classNode)
+    private function buildClassFile(DOMElement $classNode)
     {
         (new ClassBuilder($classNode, $this->buildDirectory($classNode)))->write();
     }
-
-
-    // Helper functions below this line.
 
     /**
      * Build a filename from node object and, if needed, the default directory.
@@ -285,8 +285,10 @@ class ClassBuilder
         $this->createDirectoryIfNeeded();
         $this->getFileWriter()->appendToFile('<?php');
 
+        // Build individual parts of class.
         $this->appendNamespace();
         $this->appendUses();
+        $this->appendSuperdocs();
         $this->appendDocblock();
         $this->openClass();
         $this->appendTraits();
@@ -353,6 +355,41 @@ class ClassBuilder
         }
 
         $this->getFileWriter()->appendToFile('');
+    }
+
+    /**
+     * Append superdocs (extra docblocks that are printed above the normal
+     * class docblock).
+     *
+     * @return  void
+     */
+    private function appendSuperdocs()
+    {
+        $superdocs = getFirstImmediateChildByName(
+            $this->getClassNode(),
+            'superdocs'
+        );
+
+        if (is_null($superdocs) || $superdocs->childNodes->length == 0) {
+            // Do nothing.
+            return;
+        }
+
+        $docBuilder = new DocblockBuilder($this->getFileWriter());
+
+        foreach ($superdocs->childNodes as $node) {
+            if ($node->nodeName != 'superdoc') {
+                // Have to have this because DOMDocument counts line breaks as
+                // nodes.
+                continue;
+            }
+
+            $docBuilder->setDescription($node->textContent);
+            // Superdocs have no attributes (at least at the moment), so don't
+            // bother with adding them.
+            $docBuilder->write();
+            $this->getFileWriter()->appendToFile('');
+        }
     }
 
     /**
