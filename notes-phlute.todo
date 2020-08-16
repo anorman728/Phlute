@@ -203,7 +203,41 @@ Things I want to come back to:
         * Need to be able to define a constant somewhere and use them in multiple files.
     - Substitutions
         * Like, need to be able to put "This class {{classname}} has a unit test in {{location}}", and set that as a constant, and substitute regularly.
-    > As defined above.  They're both going to be the same.
+    * So, do as defined above.  They're both going to be the same.
+    * Okay, but there's another problem now-- Getting that information.
+        * The easiest way would be static variables/functions in a class.  That way I wouldn't need to pass it along.
+        * That may not be good for my reputation, but I really do think this is the cleanest way to do this.
+    + Add the macro node to the sample.
+    > Design MacroProcessor class.
+        ! Will definitely want a test script for this.
+        + Static variable for the macros.  An array with key as name and value as the string.
+        + Static function for building the aforementioned array from the macros node.
+        > Static function for processing a string.
+            * Is going to include arguments.
+            + Find all instances of {{.*?}}.
+            + If no {{.*?}} found, return input.
+            + Foreach found instance as {{instance}}:
+                + If spaces found
+                    + Replace $1...$n with arguments in macro string.
+                + Replace {{instance}} with macro.
+            + Fix problem I just realized.
+                ! The arguments cannot have spaces.
+                * The way this works as a whole is problematic, I think.  It can't explode by space.
+                * I absolutely need to have arguments in quotes.
+                * For the sake of ease of code and clarity of the xml source, it would probably be best to make them *always* required to have quotes.
+                    * It's actually just about as easy to allow not having quotes.
+                ! I need a "next" function.
+                    * Kinda like pop.
+            > Allow literal double quote.
+    > Call the first function mentioned before in the Main class.
+    > Create independent function for getting Node text data.
+        * It's going to pull from the node, then run it through the processor in MacroProcessor.
+    > Use aforementioned function anywhere we pull node text.
+        * Maybe exception for CData.  I'm not sure yet.  Depends on how hard it will be.
+        * I actually just realized-- If there's a problem with CData, at least the way that I think there *might* be, then there's going to be a problem with docs that have multiple lines.
+            ! I'm going to manually check all docs that have multiple lines, to double-check that they're working as I intend.
+- Allow literal $ in macros.
+    --Nah, forget that.  It would only impact $\d, and I never use that pattern.
 > 'extends' attribute.
 > abstract classes
 > abstract functions

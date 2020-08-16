@@ -99,7 +99,7 @@ class Main
      */
     public function run()
     {
-        $root = getImmediateChildrenByName($this->getXmlInput(), 'phlute')[0];
+        $root = getFirstImmediateChildByName($this->getXmlInput(), 'phlute');
 
         // Get output directory.
         $this->setDefaultOutputDir(
@@ -796,9 +796,11 @@ class DocblockBuilder
             $this->addBlankLine();
 
             $this->writeAttributesToFile();
+
         }
 
         $this->finalizeDocblock();
+
     }
 
 
@@ -950,6 +952,7 @@ class DocblockBuilder
         }
 
         return $returnArr;
+
     }
 
     /**
@@ -968,6 +971,7 @@ class DocblockBuilder
             foreach ($dumarr as $line) {
                 $this->getFileWriter()->appendToFile($line);
             }
+
         }
     }
 
@@ -1606,6 +1610,143 @@ class CDataHandler
     {
         if (strlen(trim($contentArr[$ind])) == 0) {
             unset($contentArr[$ind]);
+        }
+    }
+
+}
+
+/**
+ * Collection of static variables and functions to run lines pulled from XML
+ * through a process to search-and-replace with defined macros.
+ *
+ * @author  Andrew Norman
+ */
+class MacroProcessor
+{
+    /**
+     * Array mapping name of macro to its corresponding string.
+     *
+     * @var array
+     */
+    private static $macros = [];
+
+    /**
+     * Parse macros from XML.
+     *
+     * @param   DOMNode $macronode
+     * @return  void
+     */
+    public static function parseMacros(DOMNode $macronode)
+    {
+        foreach (getImmediateChildrenByName($macronode, 'macro') as $node) {
+            static::$macros[$node->getAttribute('name')] = $node->textContent;
+        }
+    }
+
+    /**
+     * Process a string according to the macros.
+     *
+     * @param   string  $nodedata
+     * @return  string
+     */
+    public static function process(string $nodedata): string
+    {
+        preg_match_all('/{{.*?}}/', $nodedata, $matches);
+
+        if (count($matches) == 0) {
+            return $nodedata;
+        }
+
+        foreach ($matches[0] as $match) {
+            $nodedata = static::modifyString($nodedata, $match);
+        }
+
+        return $nodedata;
+    }
+
+
+    // Helper functions below this line.
+
+    /**
+     * Modify string to replace with macro data.
+     *
+     * @param   string  $nodedata
+     * @param   string  $match
+     * @return  string
+     */
+    private static function modifyString(string $nodedata, $match): string
+    {
+        $maccall = trim(trim($match, '{'), '}');
+        // Remove braces and make a copy (the copy part is important!)
+
+        // Get the name of the macro.
+        $key = '';
+        static::next($maccall, $key);
+
+        // Get the macro definition.  This will be modified if arguments are
+        // passed.
+        $mac = static::$macros[$key];
+
+        // For each argument passed, replace the value in the macro.
+        $next = '';
+        $i = 1;
+
+        // Note that if there are no arguments passed, then $maccall will
+        // already be an empty string.
+        while (strlen($maccall) > 0) {
+            static::next($maccall, $next);
+            $mac = str_replace("\$$i", $next, $mac);
+            $i++;
+        }
+
+        return str_replace($match, $mac, $nodedata);
+
+    }
+
+    /**
+     * Find the "next" argument in a macro call, remove it from $maccall, and
+     * set $next as as new value.  (So both arguments are passed by reference!)
+     *
+     * For example, in the macro call "mymac "testing 123" seven", we're calling
+     * the macro called "mymac" using the arguments "testing 123" and "seven"
+     * (notice there are no quotes around seven in the actual call).  So,
+     * calling on this string the first time will set $next as "mymac" and
+     * remove "mymac " from the string.  We call next again to get the
+     * arguments.
+     *
+     * @param   string  $maccall
+     *  The string used to call the macro.  Passed by reference, and it will be
+     *  changed!
+     * @param   string  $next
+     *  The next value to pull out of the $maccall.
+     * @return  void
+     */
+    private static function next(string &$maccall, string &$next)
+    {
+        if (substr($maccall, 0, 1) == '"') {
+            // If start with quote, find next quote.
+            $nextstop = strpos($maccall, '"', 1);
+
+            $next       = substr($maccall, 1, $nextstop - 1);
+            // Start at 1, stop short 1, because don't want to include the
+            // actual quotes.
+
+            // Remove $next from $maccall.
+            $maccall    = trim(substr($maccall, $nextstop + 1));
+            // Trim because there is probably a space after the closing quote,
+            // but there may not be.
+        } elseif (strpos($maccall, ' ')) {
+            // Else if contains a space, find next space.
+            $nextstop = strpos($maccall, ' ');
+
+            $next = substr($maccall, 0, $nextstop);
+
+            // Remove $next from $maccall.
+            $maccall = substr($maccall, $nextstop + 1);
+        } else {
+            // No spaces, no quotes, so this must be the last one.
+            $next = $maccall;
+            $maccall = '';
         }
     }
 
