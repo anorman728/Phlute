@@ -166,7 +166,7 @@ Things I want to come back to:
     * For the phpunit note.
 + Remove extra line from superdoc.
     * This is basically just going to mean not adding the extra line if there are no attributes.
-> Macros
++ Macros
     * I'm thinking this will be like preprocessor macros in C/C++.
         * Except hopefully not verboten to use.
     * Right now I'm thinking that the FileWriter may be what handles this?
@@ -208,11 +208,11 @@ Things I want to come back to:
         * The easiest way would be static variables/functions in a class.  That way I wouldn't need to pass it along.
         * That may not be good for my reputation, but I really do think this is the cleanest way to do this.
     + Add the macro node to the sample.
-    > Design MacroProcessor class.
+    + Design MacroProcessor class.
         ! Will definitely want a test script for this.
         + Static variable for the macros.  An array with key as name and value as the string.
         + Static function for building the aforementioned array from the macros node.
-        > Static function for processing a string.
+        + Static function for processing a string.
             * Is going to include arguments.
             + Find all instances of {{.*?}}.
             + If no {{.*?}} found, return input.
@@ -228,16 +228,39 @@ Things I want to come back to:
                     * It's actually just about as easy to allow not having quotes.
                 ! I need a "next" function.
                     * Kinda like pop.
-            > Allow literal double quote.
-    > Call the first function mentioned before in the Main class.
-    > Create independent function for getting Node text data.
+            - Allow literal double quote in argument.
+                * I'm not 100% sure yet how to do this.
+                * But it will almost certainly involve the `next` method.
+                * I guess I'll just need to check if prior character is a backslash, and if so, then go to the next one.
+                * The only solution I can think of is to make a new strpos function.
+                * If I allow literal quotes with blackslashes, I'm going to have to replace them.  That also means I'm going to have to handle literal backslashes, too.
+                * The logic of this is going to be difficult.
+                ! I actually think I'm going to go ahead and put this off.
+            - Allow literal dollar sign followed by number in macro.
+                * I decided against it before, but I'm realizing that I'll need to.
+                    * I may decide to make a joke about the dollar menu at McDonald's.
+            --These were put off.
+    + Call the first function mentioned before in the Main class.
+        * By "first function", I'm pretty sure I meant the function to parse the macros, i.e., MacroProcessor::parseMacros.
+        ! I just noticed an inconsistency in the way the xml is designed.
+            * Everything else have things grouped together, like every `macro` element is a child of the `macros` element.
+            * But that's not the case for classes.  Every `class` elment is a child of the root element.
+            * For the time being... I think I'm just going to ignore this inconsistency.
+    + Create independent function for getting Node text data.
         * It's going to pull from the node, then run it through the processor in MacroProcessor.
-    > Use aforementioned function anywhere we pull node text.
+    + Use aforementioned function anywhere we pull node text.
         * Maybe exception for CData.  I'm not sure yet.  Depends on how hard it will be.
         * I actually just realized-- If there's a problem with CData, at least the way that I think there *might* be, then there's going to be a problem with docs that have multiple lines.
             ! I'm going to manually check all docs that have multiple lines, to double-check that they're working as I intend.
+        * Will need to replace almost any instanceof getting `nodeValue`.
+            * Did the docblock one (which might be the only one, actually).
+            * There's two places for docblock, actually-- The classes and the methods.  I have them both now.
 - Allow literal $ in macros.
     --Nah, forget that.  It would only impact $\d, and I never use that pattern.
++ Make sure it works if no macros are defined at all.
+    * Couple of things that needed to be fixed.
+    + Don't call parseMacros if there are no macros to be parsed.
+    + Throw exception if macro not found.
 > 'extends' attribute.
 > abstract classes
 > abstract functions
@@ -266,3 +289,10 @@ Things I want to come back to:
 - Added comment for // todo and markasincomplete.
     * Because I want to put //dmz1 in there.
     --For the time being, I'm not doing automatic test files.
+> Filter
+    * I want to be able to pass a filter that matches class names, so only class names are built that match that pattern.
+> Return to macroprocessor.
+    * These were put off earlier.
+    * Note: I don't know if this will work yet, but an idea that I have is to replace all instances of `\$` with something like [[litdol]] at first, then replace that with a literal dollar sign later.
+    > Allow literal double quote in argument.
+    > Allow literal dollar sign followed by number in macro.

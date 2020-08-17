@@ -106,10 +106,15 @@ class Main
             $root->getAttribute('default-output')
         );
 
-        foreach ($root->childNodes as $node) {
-            if ($node->nodeName == 'class') {
-                $this->buildClassFile($node);
-            }
+        // Get the macros.
+        $macros = getFirstImmediateChildByName($root, 'macros');
+        if (!is_null($macros)) {
+            MacroProcessor::parseMacros($macros);
+        }
+
+        // Build each individual class.
+        foreach (getImmediateChildrenByName($root, 'class') as $node) {
+            $this->buildClassFile($node);
         }
 
         print_r("Done.\n");
@@ -402,10 +407,9 @@ class ClassBuilder
         $docBuilder = new DocblockBuilder($this->getFileWriter());
 
         // Description.
-        $docBuilder->setDescription(getImmediateChildrenByname(
-            $this->getClassNode(),
-            'doc'
-        )[0]->nodeValue);
+        $docBuilder->setDescription(getNodeText(
+            getFirstImmediateChildByName($this->getClassNode(), 'doc')
+        ));
 
         // Author, if applicable.
         $author = $this->getClassNode()->getAttribute('author');
@@ -1334,7 +1338,7 @@ class MethodBuilder extends ElementBuilder
         // Build docblock.
         $docblock = new DocBlockBuilder($this->getFileWriter(), $this->getIndentlvl());
         $docblock->setDescription(
-            $this->getImmediateChildrenByName('doc')[0]->nodeValue
+            getNodeText($this->getImmediateChildrenByName('doc')[0])
         );
 
         foreach ($this->getImmediateChildrenByName('input') as $input) {
@@ -1685,7 +1689,7 @@ class MacroProcessor
 
         // Get the macro definition.  This will be modified if arguments are
         // passed.
-        $mac = static::$macros[$key];
+        $mac = static::getMacroString($key);
 
         // For each argument passed, replace the value in the macro.
         $next = '';
@@ -1735,6 +1739,7 @@ class MacroProcessor
             $maccall    = trim(substr($maccall, $nextstop + 1));
             // Trim because there is probably a space after the closing quote,
             // but there may not be.
+
         } elseif (strpos($maccall, ' ')) {
             // Else if contains a space, find next space.
             $nextstop = strpos($maccall, ' ');
@@ -1747,7 +1752,26 @@ class MacroProcessor
             // No spaces, no quotes, so this must be the last one.
             $next = $maccall;
             $maccall = '';
+
         }
+    }
+
+    /**
+     * Get macro string.
+     *
+     * @param   string  $key
+     * @return  string
+     * @throws  Exception
+     *  If macro does not exist.
+     */
+    private static function getMacroString(string $key): string
+    {
+        if (!array_key_exists($key, static::$macros)) {
+            throw new Exception("Macro \"$key\" is not defined.");
+        }
+
+        return static::$macros[$key];
+
     }
 
 }
@@ -1836,6 +1860,22 @@ function addPseudoTab(string $input): string
     } while ((strlen($input) % 4) != 0);
 
     return $input;
+}
+
+/**
+ * Get a node's text (the nodeValue), and do any preprocessing we need to do
+ * before returning it.
+ *
+ * With the one exception of CData, we never get nodeValue or textContent
+ * directly.  We always use this function, because we want to run it through the
+ * MacroProcessor.
+ *
+ * @param   DOMNode $node
+ * @return  string
+ */
+function getNodeText(DOMNode $node): string
+{
+    return MacroProcessor::process($node->nodeValue);
 }
 
 
