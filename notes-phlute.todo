@@ -261,7 +261,7 @@ Things I want to come back to:
     * Couple of things that needed to be fixed.
     + Don't call parseMacros if there are no macros to be parsed.
     + Throw exception if macro not found.
-> 'extends' attribute.
++ 'extends' attribute.
 > abstract classes
 > abstract functions
 > static functions
@@ -270,6 +270,7 @@ Things I want to come back to:
     * Probably just make them child elements of the properties element, and just make them an options of the Property object.
     * No, not quite-- Make the tag name `constant`.
 > interfaces
+    * i.e., implements
 > If information is small enough, docblock needs to go on one line.
 > Public properties
 > 'throws" attribute for functions.
@@ -296,3 +297,4 @@ Things I want to come back to:
     * Note: I don't know if this will work yet, but an idea that I have is to replace all instances of `\$` with something like [[litdol]] at first, then replace that with a literal dollar sign later.
     > Allow literal double quote in argument.
     > Allow literal dollar sign followed by number in macro.
+    > Allow literal {{ in source.

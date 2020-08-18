@@ -316,6 +316,25 @@ class ClassBuilder
     }
 
     /**
+     * Pull the extension declaration (i.e., the "extends <some parent class>"
+     * part).
+     *
+     * If there's nothing to extend, it returns an empty string.
+     *
+     * @return  string
+     */
+    private function pullExtension(): string
+    {
+        $extension = $this->getClassNode()->getAttribute('extends');
+
+        if (strlen($extension) > 0) {
+            return " extends $extension";
+        }
+
+        return '';
+    }
+
+    /**
      * Builder and getter for fully-qualified filepath.
      *
      * @return  string
@@ -427,7 +446,9 @@ class ClassBuilder
      */
     private function openClass()
     {
-        $this->getFileWriter()->appendToFile('class ' . $this->pullClassName());
+        $openline = 'class ' . $this->pullClassName() . $this->pullExtension();
+
+        $this->getFileWriter()->appendToFile($openline);
         $this->getFileWriter()->appendToFile('{');
     }
 
