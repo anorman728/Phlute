@@ -262,8 +262,14 @@ Things I want to come back to:
     + Don't call parseMacros if there are no macros to be parsed.
     + Throw exception if macro not found.
 + 'extends' attribute.
-> abstract classes
-> abstract functions
++ abstract classes
++ abstract functions
+    ! I want to put this in the manual test.
+    + Create isAbstract function.
+    + If abstract, then
+        + Start declaration with 'abstract '.
+        + End declaration with semicolon.
+        + Skip rest of writeFunction after writing signature.
 > static functions
 > static properties
 > Constants
@@ -292,6 +298,8 @@ Things I want to come back to:
     --For the time being, I'm not doing automatic test files.
 > Filter
     * I want to be able to pass a filter that matches class names, so only class names are built that match that pattern.
+> Delete files
+    * Need an option to pass from CLI to delete all files that would otherwise be written.
 > Return to macroprocessor.
     * These were put off earlier.
     * Note: I don't know if this will work yet, but an idea that I have is to replace all instances of `\$` with something like [[litdol]] at first, then replace that with a literal dollar sign later.

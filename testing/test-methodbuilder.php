@@ -44,3 +44,23 @@ $methodBuilder = new MethodBuilder($writer, $el, 1);
 $methodBuilder->setVisibility('protected');
 
 $methodBuilder->write();
+
+
+$writer->appendToFile('');
+$writer->appendToFile('// Now testing with abstract functions.');
+
+$xml = <<<'__XML'
+    <method return="string" name="abstFunc" abstract="1">
+        <doc>This is an abstract function.</doc>
+        <input type="string" name="inputvar" desc="This is an input variable."/>
+    </method>
+__XML;
+
+$dom = new DOMDocument();
+$dom->loadXml($xml);
+$dom->preserveWhiteSpace = false;
+
+$el = $dom->getElementsByTagName('method')[0];
+
+$methodBuilder = new MethodBuilder($writer, $el, 1);
+$methodBuilder->write();

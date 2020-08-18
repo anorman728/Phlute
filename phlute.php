@@ -335,6 +335,21 @@ class ClassBuilder
     }
 
     /**
+     * Create 'abstract ' to put before class declaration, or empty string if
+     * not an abstract class.
+     *
+     * @return  string
+     */
+    private function abstractDeclarationIfApplicable(): string
+    {
+        if ($this->getClassNode()->getAttribute('abstract')) {
+            return 'abstract ';
+        }
+
+        return '';
+    }
+
+    /**
      * Builder and getter for fully-qualified filepath.
      *
      * @return  string
@@ -446,7 +461,10 @@ class ClassBuilder
      */
     private function openClass()
     {
-        $openline = 'class ' . $this->pullClassName() . $this->pullExtension();
+        $openline = $this->abstractDeclarationIfApplicable();
+        $openline.= 'class ';
+        $openline.= $this->pullClassName();
+        $openline.= $this->pullExtension();
 
         $this->getFileWriter()->appendToFile($openline);
         $this->getFileWriter()->appendToFile('{');
@@ -1386,6 +1404,12 @@ class MethodBuilder extends ElementBuilder
     private function writeFunction()
     {
         $this->writeFunction_Signature();
+
+        if ($this->isAbstract()) {
+            // Nothing to do-- Abstract functions don't have content.
+            return;
+        }
+
         $this->getFileWriter()->appendToFile('{', $this->getIndentlvl());
 
         $this->writeFunction_Content();
@@ -1410,10 +1434,13 @@ class MethodBuilder extends ElementBuilder
             : ": $returnType"
         ;
 
-        $this->getFileWriter()->appendToFile(
-            "$vis function $name($args)$returnType",
-            $this->getIndentlvl()
-        );
+        $declaration = "$vis function $name($args)$returnType";
+
+        if ($this->isAbstract()) {
+            $declaration = "abstract $declaration;";
+        }
+
+        $this->getFileWriter()->appendToFile($declaration, $this->getIndentlvl());
     }
 
     /**
@@ -1460,6 +1487,16 @@ class MethodBuilder extends ElementBuilder
                 $this->getFileWriter()->appendToFile($line, $dumIndent);
             }
         }
+    }
+
+    /**
+     * Determine if function is abstract.
+     *
+     * @return  bool
+     */
+    private function isAbstract(): bool
+    {
+        return $this->getAttribute('abstract');
     }
 
 }
