@@ -16,7 +16,7 @@ $writer->appendToFile('');
 $xml = <<<'__XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <testdoc>
-    <property type="int" name="myprop" default="7" getter="0" doc="Test var."/>
+    <property type="int" name="myprop" default="7" doc="Test var." keywords="static"/>
 </testdoc>
 __XML;
 

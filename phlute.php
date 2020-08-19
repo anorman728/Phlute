@@ -1220,6 +1220,16 @@ abstract class ElementBuilder
     }
 
     /**
+     * Determine if element is declared as static.
+     *
+     * @return  bool
+     */
+    protected function isStatic(): bool
+    {
+        return in_array('static', $this->getKeywords());
+    }
+
+    /**
      * Convert the "keywords" attribute to an array and set the $keywords
      * property.
      *
@@ -1278,7 +1288,8 @@ class PropertyBuilder extends ElementBuilder
      */
     private function writeDeclaration()
     {
-        $declaration = 'private $' . $this->getAttribute('name');
+        $stat = $this->isStatic() ? 'static ' : '';
+        $declaration = "private {$stat}\$" . $this->getAttribute('name');
 
         if (strlen($this->getAttribute('default')) > 0) {
             $declaration.= ' = ' . $this->buildDefaultValueString();
@@ -1325,6 +1336,7 @@ class PropertyBuilder extends ElementBuilder
         $el = $domDum->createElement('method');
         $el->setAttribute('return', $this->getAttribute('type'));
         $el->setAttribute('name', 'get' . ucfirst($name));
+        $el->setAttribute('keywords', ($this->isStatic() ? 'static' : ''));
 
         $doc = $domDum->createElement('doc', "Getter for $name.");
         $el->appendChild($doc);
@@ -1363,6 +1375,7 @@ class PropertyBuilder extends ElementBuilder
         $el = $domDum->createElement('method');
         $el->setAttribute('return', 'void');
         $el->setAttribute('name', 'set' . ucfirst($name));
+        $el->setAttribute('keywords', ($this->isStatic() ? 'static' : ''));
 
         $doc = $domDum->createElement('doc', "Setter for $name.");
         $el->appendChild($doc);
@@ -1504,6 +1517,7 @@ class MethodBuilder extends ElementBuilder
     private function writeFunction_Signature()
     {
         $vis = $this->getVisibility();
+        $stat = $this->isStatic() ? ' static' : '';
         $name = $this->getAttribute('name');
         $args = implode(',', $this->buildArgumentsArray());
 
@@ -1513,7 +1527,7 @@ class MethodBuilder extends ElementBuilder
             : ": $returnType"
         ;
 
-        $declaration = "$vis function $name($args)$returnType";
+        $declaration = "{$vis}{$stat} function $name($args)$returnType";
 
         if ($this->isAbstract()) {
             $declaration = "abstract $declaration;";

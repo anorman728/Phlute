@@ -299,8 +299,10 @@ Things I want to come back to:
             - Set keywords array at beginning of write function.
             + Set keywords array in constructor.
             + isAbstract now needs to check if the word 'abstract' is in the array.
-> static functions
-> static properties
++ static functions
+    * Added isStatic method to parent class, so now need to actually put it into practice with functions.
++ static properties
+    ! Don't forget to add static attribute to getter and setter.
 > Constants
     * Probably just make them child elements of the properties element, and just make them an options of the Property object.
     * No, not quite-- Make the tag name `constant`.
