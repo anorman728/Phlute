@@ -62,6 +62,10 @@
             </superdoc>
         </superdocs>
         <doc>Subspace.  {{mymac first second}} That was a macro in action.</doc>
+        <properties>
+            <property name="myProp" doc="My Property"/>
+            <constant name="MY_CONST" doc="This is a constant." value="5"/>
+        </properties>
         <methods>
             <protected>
                 <method return="void" name="salmak" keywords="abstract">

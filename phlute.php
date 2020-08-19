@@ -550,17 +550,28 @@ class ClassBuilder
      */
     private function appendProperties()
     {
-        $properties = getFirstImmediateChildByName($this->getClassNode(), 'properties');
+        $properties = getFirstImmediateChildByName(
+            $this->getClassNode(), 'properties');
 
         if (is_null($properties)) {
             // If nothing provided, then do nothing.
             return;
         }
 
+        // Start with the constants (which are grouped with the variable
+        // properties).
+        foreach (getImmediateChildrenByName($properties, 'constant') as $constNode) {
+            (new ConstantBuilder($this->getFileWriter(), $constNode, 1))->write();
+        }
+
+
+        // Now handle the properties.
+
         $propertiesArr = [];
+        $propertiesRaw = getImmediateChildrenByName($properties, 'property');
 
         // Collect all properties into array.
-        foreach ($properties->childNodes as $childNode) {
+        foreach ($propertiesRaw as $childNode) {
             $propertiesArr[] = new PropertyBuilder(
                 $this->getFileWriter(), $childNode, 1);
         }
@@ -1297,7 +1308,7 @@ class PropertyBuilder extends ElementBuilder
 
         $declaration.= ';';
 
-        $this->getFileWriter()->appendToFile($declaration, $this->getIndentLvl());
+        $this->getFileWriter()->appendToFile($declaration, $this->getIndentlvl());
     }
 
     /**
@@ -1406,6 +1417,49 @@ class PropertyBuilder extends ElementBuilder
             $el,
             $this->getIndentlvl()
         ))->write();
+    }
+
+}
+
+/**
+ * Build a constant.  Helper class for ClassBuilder.
+ *
+ * @author  Andrew Norman
+ */
+class ConstantBuilder extends ElementBuilder
+{
+    /**
+     * {@inheritDoc}
+     *
+     */
+    public function write()
+    {
+        $docblock = new DocBlockBuilder($this->getFileWriter(), $this->getIndentlvl());
+        $docblock->setDescription($this->getAttribute('doc'));
+        $docblock->addAttribute('var', [$this->getAttribute('type')]);
+        $docblock->write();
+
+        $this->writeAssignment();
+
+        $this->getFileWriter()->appendToFile('');
+    }
+
+    /**
+     * Write the assignment itself.
+     *
+     * @return  void
+     */
+    private function writeAssignment()
+    {
+        $assignment =
+            'const '
+            . $this->getAttribute('name')
+            . ' = '
+            . $this->getAttribute('value')
+            . ';'
+        ;
+
+        $this->getFileWriter()->appendToFile($assignment, $this->getIndentlvl());
     }
 
 }

@@ -303,9 +303,13 @@ Things I want to come back to:
     * Added isStatic method to parent class, so now need to actually put it into practice with functions.
 + static properties
     ! Don't forget to add static attribute to getter and setter.
-> Constants
++ Constants
     * Probably just make them child elements of the properties element, and just make them an options of the Property object.
     * No, not quite-- Make the tag name `constant`.
+    * Might be another child class to ElementBuilder.
+    + Make ConstantBuilder class.
+    + Implement ConstantBuilder.
+        * Alongside wherever PropertyBuilder is used.
 > Decent documentation.
     * I'm getting to the point where I at least need some kind of reference material.
 > interfaces
@@ -334,9 +338,20 @@ Things I want to come back to:
     * I want to be able to pass a filter that matches class names, so only class names are built that match that pattern.
 > Delete files
     * Need an option to pass from CLI to delete all files that would otherwise be written.
+> No space before functions.
+    * I did this as an easy way to prevent space at end of last function, but it's actually causing other problems.
+    * If there are no use statements or variables or what-have-you, if the first thing in a class is a function, then there's an unwanted space.
+    * I'm going to have to figure out another way to fix that last space.
+
+! This is the point where I would call this project probably effectively done for 1.0.
+    * Though at this point I'm not actually versioning.
+
 > Return to macroprocessor.
     * These were put off earlier.
     * Note: I don't know if this will work yet, but an idea that I have is to replace all instances of `\$` with something like [[litdol]] at first, then replace that with a literal dollar sign later.
     > Allow literal double quote in argument.
     > Allow literal dollar sign followed by number in macro.
     > Allow literal {{ in source.
+> Allow value as child CDATA element for constants.
+    * Mostly to let me define big arrays as constants.
+> Doc for property *and* constants need to be allowed to be child elements so they can be longer.

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * File to manuallytest PropertyBuilder.
+ * File to manually test PropertyBuilder.
  *
  */
 
