@@ -50,7 +50,7 @@ $writer->appendToFile('');
 $writer->appendToFile('// Now testing with abstract functions.');
 
 $xml = <<<'__XML'
-    <method return="string" name="abstFunc" abstract="1">
+    <method return="string" name="abstFunc" keywords="abstract">
         <doc>This is an abstract function.</doc>
         <input type="string" name="inputvar" desc="This is an input variable."/>
     </method>

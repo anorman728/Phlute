@@ -270,17 +270,49 @@ Things I want to come back to:
         + Start declaration with 'abstract '.
         + End declaration with semicolon.
         + Skip rest of writeFunction after writing signature.
+* Considering rethinking abstract, static, and visibility.
+    * No, nevermind.  That would actually be more difficult.
+    * I was thinking that they would all be handled by a "prefix" attribute, which would default to "public".  But that would mean getting rid of the public/protected/private groupings, and I actually really like those.
+    * Plus I would still need special treatment of abstract functions, since those have no content.
+    * That said, I could still have some kind of minor change to the way it's passed that I think I would like.
+    * Like, instead of `abstract="1" static="1"` I could have `characteristics="abstract static"`.
+    * But not that attribute name.  I'd need a better name.
+        * The best I can think of atm is "keywords".
+    * I do actually like this idea quite a bit.
+    + `keywords` update.
+        * Only for the ones that I already have.
+        + abstract classes.
+            + Add `keywords` property.
+                * An array, with appropriate getter and setter.
+            + On construction, get `keywords` attribute, exploded by space.
+            + abstractDeclarationIfApplicable is going to return abstract if it's found in the `keywords` array.
+        + abstract functions.
+            * Going to involve changes to MethodBuilder, but best not to add anything to constructor.
+                * Because MethodBuilder is a child class of ElementBuilder, and I don't want to override the constructor.  Then every time I make a change to the constructor, I'd have to make a change to the child class.
+            * I think I'll just make the changes to write.
+            * This one will involve test-methodbuilder.
+            ! Wait a minute--
+                * I think maybe this actually should go into the the parent class, ElementBuilder.
+                * Because although *abstract* would not apply, *static* would, and this is going to work out the same way.
+            + Make keywords property.
+                * Including getter and setter.
+            - Set keywords array at beginning of write function.
+            + Set keywords array in constructor.
+            + isAbstract now needs to check if the word 'abstract' is in the array.
 > static functions
 > static properties
 > Constants
     * Probably just make them child elements of the properties element, and just make them an options of the Property object.
     * No, not quite-- Make the tag name `constant`.
+> Decent documentation.
+    * I'm getting to the point where I at least need some kind of reference material.
 > interfaces
     * i.e., implements
 > If information is small enough, docblock needs to go on one line.
 > Public properties
 > 'throws" attribute for functions.
 > Different return values for docblock in functions.
+    * I don't remember what I meant by this-- Maybe multiple possiblities with |, or maybe variant.  But I'll figure it out when I get to this point.
 > Signature needs to be multiline if too long.
 > Pass by reference.
 > Custom setters and getters.

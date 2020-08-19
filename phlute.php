@@ -193,6 +193,10 @@ class ClassBuilder
     private $filePath;
 
     /** @var string FileWriter object. */
+    private $fileWriter;
+
+    /** @var string[] Array of words in "keyword" attribute. */
+    private $keywords;
 
 
     // START getters and setters.
@@ -260,6 +264,27 @@ class ClassBuilder
        return $this->fileWriter;
     }
 
+    /**
+     * Setter for keywords.
+     *
+     * @param   array $input
+     * @return  void
+     */
+    public function setKeywords(array $input)
+    {
+        $this->keywords = $input;
+    }
+
+    /**
+     * Getter for keywords.
+     *
+     * @return  array
+     */
+    public function getKeywords(): array
+    {
+       return $this->keywords;
+    }
+
 
     // END getters and setters.
 
@@ -275,6 +300,7 @@ class ClassBuilder
         $this->setDirectoryPath($directoryPath);
         $this->setClassNode($classNode);
         $this->setFileWriter(new FileWriter($this->buildFilePath()));
+        $this->setKeywordsPropertyFromAttribute();
     }
 
     /**
@@ -304,6 +330,19 @@ class ClassBuilder
 
 
     // Helper functions below this line.
+
+    /**
+     * Convert the "keywords" attribute to an array and set the $keywords
+     * property.
+     *
+     * @return  void
+     */
+    private function setKeywordsPropertyFromAttribute()
+    {
+        $this->setKeywords(
+            explode(' ', $this->getClassNode()->getAttribute('keywords'))
+        );
+    }
 
     /**
      * Pull "name" attribute from node.
@@ -342,7 +381,7 @@ class ClassBuilder
      */
     private function abstractDeclarationIfApplicable(): string
     {
-        if ($this->getClassNode()->getAttribute('abstract')) {
+        if (in_array('abstract', $this->getKeywords())) {
             return 'abstract ';
         }
 
@@ -1036,6 +1075,10 @@ abstract class ElementBuilder
     /** @var DOMElement DOMElement object representing the property or method. */
     private $elementNode;
 
+    /** @var string[] Array of words in "keyword" attribute. */
+    private $keywords;
+
+
     // START getters and setters.
 
     /**
@@ -1101,6 +1144,28 @@ abstract class ElementBuilder
        return $this->elementNode;
     }
 
+    /**
+     * Setter for keywords.
+     *
+     * @param   array $input
+     * @return  void
+     */
+    public function setKeywords(array $input)
+    {
+        $this->keywords = $input;
+    }
+
+    /**
+     * Getter for keywords.
+     *
+     * @return  array
+     */
+    public function getKeywords(): array
+    {
+       return $this->keywords;
+    }
+
+
     // END getters and setters.
 
     /**
@@ -1119,6 +1184,7 @@ abstract class ElementBuilder
         $this->setFileWriter($fileWriter);
         $this->setElementNode($node);
         $this->setIndentlvl($indentlvl);
+        $this->setKeywordsPropertyFromAttribute();
     }
 
     /**
@@ -1151,6 +1217,19 @@ abstract class ElementBuilder
     protected function getImmediateChildrenByName(string $name): array
     {
         return getImmediateChildrenByName($this->getElementNode(), $name);
+    }
+
+    /**
+     * Convert the "keywords" attribute to an array and set the $keywords
+     * property.
+     *
+     * @return  void
+     */
+    private function setKeywordsPropertyFromAttribute()
+    {
+        $this->setKeywords(
+            explode(' ', $this->getElementNode()->getAttribute('keywords'))
+        );
     }
 
 }
@@ -1496,7 +1575,7 @@ class MethodBuilder extends ElementBuilder
      */
     private function isAbstract(): bool
     {
-        return $this->getAttribute('abstract');
+        return in_array('abstract', $this->getKeywords());
     }
 
 }
