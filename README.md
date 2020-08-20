@@ -109,8 +109,6 @@ An optional attribute for `property` elements is the `keywords` attribute.  A `p
 
 Constants will always appear before properties.  They naturally do not have getters and setters.  Their attributes are `name`, `type`, `doc`, and `value`, all of which are required (but may not actually cause an exception if missing).
 
-Constants currently only "work" for int values, but that's going to be fixed soon.
-
 ### methods
 
 The `methods` element has three child elements, all of which are optional: `public`, `protected`, and `private`.  The children of all three are the same, being `method` elements, but those groupings are defining the visibility, as you probably realize.

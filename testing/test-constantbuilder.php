@@ -16,7 +16,7 @@ $writer->appendToFile('');
 $xml = <<<'__XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <testdoc>
-    <constant type="array" doc="A constant value." name="MY_CONST" value="[1,2,3]"/>
+    <constant type="string" doc="A constant value." name="MY_CONST" value="5"/>
 </testdoc>
 __XML;
 

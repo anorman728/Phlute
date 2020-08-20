@@ -1241,6 +1241,27 @@ abstract class ElementBuilder
     }
 
     /**
+     * Build a string of attribute $valueAtt, and if $typeAtt is equal to
+     * "string", then wrap it in double quotes.
+     *
+     * This is a useful function for some child classes.
+     *
+     * @param   string  $valueAtt
+     * @param   string  $typeAtt
+     * @return  string
+     */
+    protected function buildValueString(string $valueAtt, string $typeAtt): string
+    {
+        $returnVal = $this->getAttribute($valueAtt);
+
+        if ($this->getAttribute($typeAtt) == 'string') {
+            return "\"$returnVal\"";
+        }
+
+        return $returnVal;
+    }
+
+    /**
      * Convert the "keywords" attribute to an array and set the $keywords
      * property.
      *
@@ -1303,28 +1324,12 @@ class PropertyBuilder extends ElementBuilder
         $declaration = "private {$stat}\$" . $this->getAttribute('name');
 
         if (strlen($this->getAttribute('default')) > 0) {
-            $declaration.= ' = ' . $this->buildDefaultValueString();
+            $declaration.= ' = ' . $this->buildValueString('default', 'type');
         }
 
         $declaration.= ';';
 
         $this->getFileWriter()->appendToFile($declaration, $this->getIndentlvl());
-    }
-
-    /**
-     * Build the default value string.  Helper function for writeDeclaration.
-     *
-     * @return  string
-     */
-    private function buildDefaultValueString(): string
-    {
-        $returnVal = $this->getAttribute('default');
-
-        if ($this->getAttribute('type') == 'string') {
-            return "\"$returnVal\"";
-        }
-
-        return $returnVal;
     }
 
     /**
@@ -1455,7 +1460,7 @@ class ConstantBuilder extends ElementBuilder
             'const '
             . $this->getAttribute('name')
             . ' = '
-            . $this->getAttribute('value')
+            . $this->buildValueString('value', 'type')
             . ';'
         ;
 
