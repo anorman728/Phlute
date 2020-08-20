@@ -1542,6 +1542,10 @@ class MethodBuilder extends ElementBuilder
         }
 
         $returnVal = $this->getAttribute('return');
+        if (!$returnVal) {
+            // Not defined, so could be anything.
+            $returnVal = 'variant';
+        }
         $docblock->addAttribute('return', [$returnVal]);
         $docblock->write();
 

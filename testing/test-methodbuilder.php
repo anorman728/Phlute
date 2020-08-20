@@ -16,7 +16,7 @@ $writer->appendToFile('');
 $xml = <<<'__XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <testdoc>
-    <method return="variant" name="myfunction">
+    <method name="myfunction">
         <doc>This is a function.</doc>
         <input type="string" name="myvariable" desc="This is a variable."/>
         <content><![CDATA[<?

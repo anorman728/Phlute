@@ -115,9 +115,9 @@ The `methods` element has three child elements, all of which are optional: `publ
 
 ### method
 
-The actual `method` elements have two required attributes, being `return` and `name`, and one optional attribute being `keywords`.
+The actual `method` elements have one required attribute, being `name`, and two optional attributes, being `return` and `keywords`.
 
-`return` is the type for return value.  This currently must be defined, but a future version will allow for variant return types.
+`return` is the type for return value.  This handles both the definition in the docblock and the type enforcement.  If it's missing, then the docblock will say "variant" and no type will be enforced.
 
 `keywords` here is similar to the `keywords` attributes for classes, but there's an additional option of `static` here.  So, you could have `keywords="abstract static"` and the method will be declared as both abstract and static.
 

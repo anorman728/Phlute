@@ -312,7 +312,7 @@ Things I want to come back to:
         * Alongside wherever PropertyBuilder is used.
 + Decent documentation.
     * I'm getting to the point where I at least need some kind of reference material.
-> Const type update
++ Const type update
     * Right now, constant strings are 100% broken.  They're always set as if they were ints.
     * But they are working correctly for properties.  It's just that with constants I forgot that there are things other than ints.
     * Trying to find a way to do this without code duplication.
@@ -325,9 +325,15 @@ Things I want to come back to:
 - Different return values for docblock in functions.
     * I don't remember what I meant by this-- Maybe multiple possiblities with |, or maybe variant.  But I'll figure it out when I get to this point.
     --Specified in more detail below.
-> Variant type for properties.
-> Variant return types for methods.
+> Variant return types for method return.
+    * Almost done even as it is.  If return type is missing from element, it works correctly in the declaration-- It's just the docblock that's wrong.
+    * I actually think that I should only change the docblock behavior here.  If it's blank, then print variant.
+    * Note that void already works as I need it to.
+> Nullable return types.
+    * While I'm here, I think it would make sense to do this.
 > Variant input types.
+> Variant type for properties.
+    * When done with two above, that may actually end up handling this.
 > interfaces
     * i.e., implements
 > If information is small enough, docblock needs to go on one line.
