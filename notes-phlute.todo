@@ -310,15 +310,22 @@ Things I want to come back to:
     + Make ConstantBuilder class.
     + Implement ConstantBuilder.
         * Alongside wherever PropertyBuilder is used.
-> Decent documentation.
++ Decent documentation.
     * I'm getting to the point where I at least need some kind of reference material.
+> Const type update
+    * Right now, constant strings are 100% broken.  They're always set as if they were ints.
+    * But they are working correctly for properties.  It's just that with constants I forgot that there are things other than ints.
 > interfaces
     * i.e., implements
 > If information is small enough, docblock needs to go on one line.
 > Public properties
 > 'throws" attribute for functions.
-> Different return values for docblock in functions.
+- Different return values for docblock in functions.
     * I don't remember what I meant by this-- Maybe multiple possiblities with |, or maybe variant.  But I'll figure it out when I get to this point.
+    --Specified in more detail below.
+> Variant type for properties.
+> Variant return types for methods.
+> Variant input types.
 > Signature needs to be multiline if too long.
 > Pass by reference.
 > Custom setters and getters.
