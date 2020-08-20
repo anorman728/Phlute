@@ -16,7 +16,7 @@ $writer->appendToFile('');
 $xml = <<<'__XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <testdoc>
-    <method name="myfunction">
+    <method name="myfunction" return="string">
         <doc>This is a function.</doc>
         <input type="string" name="myvariable" desc="This is a variable."/>
         <content><![CDATA[<?
@@ -50,7 +50,7 @@ $writer->appendToFile('');
 $writer->appendToFile('// Now testing with abstract functions.');
 
 $xml = <<<'__XML'
-    <method return="string" name="abstFunc" keywords="abstract">
+    <method return="int|string" name="abstFunc" keywords="abstract">
         <doc>This is an abstract function.</doc>
         <input type="string" name="inputvar" desc="This is an input variable."/>
     </method>

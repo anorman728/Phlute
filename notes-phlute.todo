@@ -325,15 +325,24 @@ Things I want to come back to:
 - Different return values for docblock in functions.
     * I don't remember what I meant by this-- Maybe multiple possiblities with |, or maybe variant.  But I'll figure it out when I get to this point.
     --Specified in more detail below.
-> Variant return types for method return.
++ Variant return types for method return.
     * Almost done even as it is.  If return type is missing from element, it works correctly in the declaration-- It's just the docblock that's wrong.
     * I actually think that I should only change the docblock behavior here.  If it's blank, then print variant.
     * Note that void already works as I need it to.
-> Nullable return types.
+> Other method return changes.
     * While I'm here, I think it would make sense to do this.
+    + Nullable return types.
+        * If type starts with `?`, then want to remove that from the docblock and append with a `|null`.
+    + Multiple return types.
+        * If type includes `|`, then cannot enforce a type.
+    > Class return types need fully-qualified namespace in docblock.
+        * Crap.
+            * I don't have the `use` elements collected when building a method, and I don't *want* to do that, but there's not much of a choice here.
+            * I'm going to have to collect these into an array before instantiating *any* MethodBuilder objects, and set this as a required object for every MethodBuilder object.
+        * This is only going to be for docblocks, not the return type.
 > Variant input types.
 > Variant type for properties.
-    * When done with two above, that may actually end up handling this.
+    * When done with above, that may actually end up handling this.
 > interfaces
     * i.e., implements
 > If information is small enough, docblock needs to go on one line.

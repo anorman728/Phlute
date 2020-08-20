@@ -1546,6 +1546,11 @@ class MethodBuilder extends ElementBuilder
             // Not defined, so could be anything.
             $returnVal = 'variant';
         }
+        if (substr($returnVal, 0, 1) == '?') {
+            // Nullable type.
+            $returnVal = substr($returnVal, 1) . '|null';
+        }
+
         $docblock->addAttribute('return', [$returnVal]);
         $docblock->write();
 
@@ -1585,10 +1590,14 @@ class MethodBuilder extends ElementBuilder
         $args = implode(',', $this->buildArgumentsArray());
 
         $returnType = $this->getAttribute('return');
-        $returnType = (($returnType == 'void') || (strlen($returnType) == 0))
-            ? ''
-            : ": $returnType"
-        ;
+
+        $dontEnforceReturnType = (
+            ($returnType == 'void')
+            || (strlen($returnType) == 0)
+            || (strpos($returnType, '|') != false)
+        );
+
+        $returnType = $dontEnforceReturnType ? '' : ": $returnType";
 
         $declaration = "{$vis}{$stat} function $name($args)$returnType";
 
