@@ -329,18 +329,191 @@ Things I want to come back to:
     * Almost done even as it is.  If return type is missing from element, it works correctly in the declaration-- It's just the docblock that's wrong.
     * I actually think that I should only change the docblock behavior here.  If it's blank, then print variant.
     * Note that void already works as I need it to.
-> Other method return changes.
++ Other method return changes.
     * While I'm here, I think it would make sense to do this.
     + Nullable return types.
         * If type starts with `?`, then want to remove that from the docblock and append with a `|null`.
     + Multiple return types.
         * If type includes `|`, then cannot enforce a type.
-    > Class return types need fully-qualified namespace in docblock.
+    - Class return types need fully-qualified namespace in docblock.
         * Crap.
             * I don't have the `use` elements collected when building a method, and I don't *want* to do that, but there's not much of a choice here.
             * I'm going to have to collect these into an array before instantiating *any* MethodBuilder objects, and set this as a required object for every MethodBuilder object.
         * This is only going to be for docblocks, not the return type.
+        + MethodBuilder
+            + Make a property for this array that's *null* (not empty array) by default.
+            + Make a setter for the use statements array in MethodBuilder.
+                * <Class name> => <Fully-qualified class name>
+                * Will want to use the test for this.
+            + When write method, if array is null (not empty), throw exception.
+                * This must always be set.
+                ! I'll put this exception in the getter, but with a specific message.
+            + When write method, docblock attributes need to take this into account.
+                + Input
+                + Returnval
+        > Abstract the logic for getDocTypeFromInputNode.
+            * I kinda hate to say it, but I'm starting to think this needs to be static properties and functions like MacroProcessor.
+            * I hate doing those.  I feel like there's too many ways that can go wrong.
+            * That's also going to require completely rethinking how this would work.
+                * There would be significantly less code.
+            * I think I have a better idea, actually.
+                * Static wouldn't fit very well because unlike macros, it's not "universal".  It would change when I move to the next class.
+                    * I feel like that would make its behavior precarious.
+                * I think I really want to avoid that altogether.
+            * Instead of building an array, make a class.
+                * Then the object itself can handle getting the fully-qualified namespace and formatting it correctly.
+                * This is actually a pretty obvious solution.  I feel kinda dumb not having thought of it before.
+        > PropertyBuilder
+            > When writing docblocks, need to use this.
+            > When writing getters and setters, need to pass this to method builder.
+        * Note that I'm fairly confident that I won't need this for ConstantBuilder.  I've never used anything other than primitive types or arrays for constants.
+        > ClassBuilder
+            > Make a private property that's an empty array for the use statements.
+            > Collect the use statements in the appropriate format before building any methods (including getters and setters).
+            > Pass the use statements to each MethodBuilder
+            > Pass the use statements to each PropertyBuilder.
+        --Better version below.
+    + Class return types need fully-qualified namespace in docblock. (New version).
+        + Create class to handle getting the fully-qualified namespace.
+            * "UsedNamespaces"
+            + Array holding the map of class name to fully-qualified class name.
+            + Constructor that parses `uses` element.
+            + Public function to handle getting the name.
+                @begin=php@<?
+                    // $className is passed.
+                    $namespaceArr = $this->getNamespaceArr();
+                    if (array_key_exists($className, $namespaceArr)) {
+                        return $namespaceArr[$className];
+                    }
+
+                    return $className;
+                ?>@end=php@
+                * I just thought of a problem: I will need backslashes before output of fullyQualifiedName for class names even if there's no match, but not for primitive types.
+                    ! So, if there's no match, I think I want to use is_object to determine whether or not to add a backslash.
+                        ! No, that's not right-- The $type that I'm going to be getting is always going to be a string.
+                    * I'm actually thinking now that the only thing I need to do is check if the class exists.
+                        ! No, I feel stupid-- In that context, the class won't exist.
+                    * The only thing I can think of so far is making an array of things that don't need the backslash.
+                        * I don't like that because it's not very versatile, but now that I think of it, the context doesn't really allow for anything else.
+                * I'm starting to wonder, though-- Should I need to add backslashes?  I think I might be wrong about this.
+                    * Okay, yes I will.  Remember that this is for the docblocks and nothing else.  I'll need a starting backslash in all cases except primitive types.
+            - NamespaceArr needs to be set to null be default.
+            - getNamespaceArr needs to throw exception (clearly) if namespaceArr is null.
+                * If there are no `use` statements, then an empty array will work.
+            --Canceled points are no longer necessary.
+        + Build UsedNamespaces instance in ClassBuilder.
+            * Not Main.
+            ! I need to handle the possibility of no use element.
+                * I guess an empty one is technically already handled, but it's worth testing at any rate.
+                * I think I should still create a UsedNamespaces object, for code consistency and clarity.
+                    * The fullyQualifiedName will just never have namespaces to use, and that's fine.
+                * But I'm probably going to have to make a change to the UsedNamespaces class as it is in that case.
+            + Empty `uses` element.
+                * The damn DOMText is getting in the way.
+                * But there's something funky here.  It doesn't seem to be showing up as a problem in the test-usednamespaces file, and I don't know why not.
+                ! Oh, because this has nothing to do with UsedNamespaces.
+                    * I don't think.
+                    * I never tested the existing ClassBuilder stuff empty uses tags.
+                    * I think I can fix this by using the getImmediateChildren method instead of looping all child nodes.
+            + No `uses` element.
+                * This is going to have to involve a change to the UsedNamespaces class, I think.
+                * A null input just makes an empty array.  That should do it.
+        + Pass to MethodBuilder.
+            * Okay, I went away and now I'm coming back and have to remind myself what I'm doing.
+                * I made the UsedNamespaces class.
+                    * Its only public function (apart from constructor) is fullyQualifiedName.
+                    * This is intended to be used only for docblocks.  That's the only place where we'll need a fully qualified name.
+                * There will be one UsedNamespace instance per instance of ClassBuilder.
+                * Now I need to actually use it in MethodBuilder, in particular the docblock.
+                * Okay, but I just remembered something important-- The DocblockBuilder class does not handle it-- It just takes the results as string.
+            * MethodBuilder can't have it in constructor.
+            + Add the property, getter, and setter.
+            + Set from ClassBuilder.
+        + Use in MethodBuilder docblock.
+            + Input
+            + Sidequest: space after comma in argument separations.
+            + Return
+        + Sidequest: Are there variant inputs?
+            * I feel like I might have broken them if there were.
+            * I should probably abstract this somehow.
+            * I don't think it was working even before this.  Right now it's a backslash, which I doubt it was before.
+            * I definitely need to abstract this.
+            * But I'm realizing that this might be something I'll need in properties.
+            * So, it might be best to actually put it in ElementBuilder?
+                * But if so, then I'll want the UsedNamespaces in ElementBuilder, too.
+                * Which would more-or-less make sense, since the UsedNamespaces will also be used by the PropertyBuilder.
+            * Okay, but I'm actually realizing that that's not going to make as much sense as I realized, because in one case the type is for $input and for another it's $this.
+            * I do still think it's better to have usedNamespaces as part of the parent class, though.
+            * I was thinking of actually making this a separate function from the class, since I'm going to have to be passing the "$this" or "$input" to it, but I think that's going to make it even more difficult.
+                * Oh, actually, since the argument passed to "getAttribute" can itself be different, I won't actually be able to do that, either.
+        - Fix huge bug with |
+            * If contains multiple types, then namespaces will treat it as one type.
+            --Already listed as a later todo item.
+        - Sidequest: Fix bug with multiple types in input variables in signature.
+            * "bug" isn't actually quite the right word.  Just haven't implemented the feature correctly yet.
+            * But this has nothing to do with the used namespaces.
+            --Oh, this is already listed as a later todo item.
+        + Fix second method in test.
+            * It's missing the UsedNamespaces object.
+        + Fix `?` in input type.
+            * I think I'm going to have to treat it as a special case.
+            * Okay, I nearly have this done but I really hate the way it's working.
+                * Because it's basically using private variables that are going to switch frequently *every* time fullyQualifiedName is called.  Basically using a variable with the scope of the object but only using it for the scope of the function.
+            * Okay, I actually did this wrong, and kinda feel dumb about it.
+                * I need to either completely ignore the '?' here or add the '|null'.
+                    * I'm leaning towards the former.
+                * I already deal with |null *somewhere* else, but I can't remember where, and I don't want to duplicate effort.
+                * So, this is just going to extract the "?", and that's it.
+        + Deal with '|null'
+            * For some reason, this is only dealt with in return value as it is?
+            * I'm actually now thinking this probably *would* be best dealt with in the UsedNamespaces class.
+        - Empty uses element.
+            * Missing works fine, but need to handle empty.
+            --No, it's fine.  I had a problem in my test xml.
+        + Double-check void return type.
+            * If it's not defined, it needs to be "void" in docblock and undefined in sig.
+            * Good thing I checked-- Right now it's saying "variant".
+                * Crud, and I think it's because of what I just did.
+            * Oh, I *think* I just have a problem with how the behavior is defined.
+            * Because if it's *defined* as void, it works fine.  If it's not defined, it works fine as variant.
+                * And that actually makes sense to me.
+            * And that's *exactly* what it already says in the readme.
+        + Double-check variant return type.
+            * If it's defined as "variant" in docblock, needs to be undefined in sig.
+                ! Not, that's not right-- If it's *not defined* it needs to be undefined in sig.
+            * Okay, this is working as expected.
+        + Pass to PropertyBuilder.
+            * Note that this now has the setUsedNamespaces function since it's part of the parent class.
+            + Pass to property builder.
+            + Use in docblock `var`.
+            + Pass to MethodBuilder for getters and setters.
+        * I think that's everything.
+        + Make sure empty or no use elements still works.
+            * Good chance this was already done, but can't be too careful since I haven't looked at this in awhile.
+    + Figure out type enforcement for non-primitive, non-used.
+        * Should it use backslash?
+        * At the moment, it does for docblocks, because that's part of the Fully-Qualified name, and doesn't for signature.
+        * What I'm thinking right now is that it shouldn't, and it was stupid to automatically add the backslash to docblocks.
+        * If I want the backslash in the output, it needs to be in the input.
+        - Remove backslash from being automatically added to usedNamespaces output.
+            ! Wait, I'm actually not that sure that I want it that way.
+            * I think I was wrong.  To be consistent, I want the backslash in the docblock and not in the type enforcement.
+                * Because, presumably, I will *always* have any required uses if it's going to be in the signature, even if it's something like StdClass or DateTime.  That means in the sig, it won't have a backslash, ever.
+                * And I always want the fully-qualified namespace in the docblock.  That means in the docblock, it will start with a backslash for any instance of a class.
+            --So, not doing this.
+        + Test property with StdClass
+            + In uses
+            + Not in uses
+            - With and without backslash.
+                --Not necessarty.
+> Fix double-space problem.
+    * If there's a double-space on a line break, it causes a superflous end-of-line space.
 > Variant input types.
+    > Docblocks
+    > Signatures.
+> Variant return types.
+    * Looks like I already did variant return types in signatures.
+    > Docblock
 > Variant type for properties.
     * When done with above, that may actually end up handling this.
 > interfaces

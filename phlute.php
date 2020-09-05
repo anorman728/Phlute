@@ -1,7 +1,6 @@
 #!/usr/bin/env php
 <?php
 
-
 /**
  * Main class to handle XML files and generate output.
  *
@@ -198,6 +197,9 @@ class ClassBuilder
     /** @var string[] Array of words in "keyword" attribute. */
     private $keywords;
 
+    /** @var UsedNamespaces Object handling namespaces in docblocks. */
+    private $usedNamespaces;
+
 
     // START getters and setters.
 
@@ -285,6 +287,27 @@ class ClassBuilder
        return $this->keywords;
     }
 
+    /**
+     * Setter for usedNamespaces.
+     *
+     * @param   UsedNamespaces $input
+     * @return  void
+     */
+    public function setUsedNamespaces(UsedNamespaces $input)
+    {
+        $this->usedNamespaces = $input;
+    }
+
+    /**
+     * Getter for usedNamespaces.
+     *
+     * @return  UsedNamespaces
+     */
+    public function getUsedNamespaces(): UsedNamespaces
+    {
+        return $this->usedNamespaces;
+    }
+
 
     // END getters and setters.
 
@@ -301,6 +324,7 @@ class ClassBuilder
         $this->setClassNode($classNode);
         $this->setFileWriter(new FileWriter($this->buildFilePath()));
         $this->setKeywordsPropertyFromAttribute();
+        $this->setUsedNamespacesFromClassNode();
     }
 
     /**
@@ -428,7 +452,7 @@ class ClassBuilder
             return;
         }
 
-        foreach ($usesElement->childNodes as $el) {
+        foreach (getImmediateChildrenByName($usesElement, 'use') as $el) {
             $this->getFileWriter()->appendToFile('use ' . $el->getAttribute('value') . ';');
         }
 
@@ -572,8 +596,11 @@ class ClassBuilder
 
         // Collect all properties into array.
         foreach ($propertiesRaw as $childNode) {
-            $propertiesArr[] = new PropertyBuilder(
+            $propertyDum = new PropertyBuilder(
                 $this->getFileWriter(), $childNode, 1);
+            $propertyDum->setUsedNamespaces(
+                $this->getUsedNamespaces());
+            $propertiesArr[] = $propertyDum;
         }
 
         // Actually add the properties.
@@ -637,6 +664,7 @@ class ClassBuilder
             foreach ($methods as $method) {
                 $methodBuilder = new MethodBuilder(
                     $this->getFileWriter(), $method, 1);
+                $methodBuilder->setUsedNamespaces($this->getUsedNamespaces());
                 $methodBuilder->setVisibility($group);
                 $methodBuilder->write();
             }
@@ -654,6 +682,18 @@ class ClassBuilder
             // 0777 is default mode value.  Last arg is to make it recursive.
             mkdir($this->getDirectoryPath(), 0777, true);
         }
+    }
+
+    /**
+     * Set the used namespace from the class node.
+     *
+     * @return  void
+     */
+    private function setUsedNamespacesFromClassNode()
+    {
+        $this->setUsedNamespaces(new UsedNamespaces(
+            getFirstImmediateChildByName($this->getClassNode(), 'uses')
+        ));
     }
 
 }
@@ -1089,6 +1129,13 @@ abstract class ElementBuilder
     /** @var string[] Array of words in "keyword" attribute. */
     private $keywords;
 
+    /**
+     * UsedNamespaces object.  Not used by all child classes.
+     *
+     * @var UsedNamespaces
+     */
+    private $usedNamespaces;
+
 
     // START getters and setters.
 
@@ -1176,6 +1223,27 @@ abstract class ElementBuilder
        return $this->keywords;
     }
 
+    /**
+     * Setter for usedNamespaces.
+     *
+     * @param   UsedNamespaces $input
+     * @return  void
+     */
+    public function setUsedNamespaces(UsedNamespaces $input)
+    {
+        $this->usedNamespaces = $input;
+    }
+
+    /**
+     * Getter for usedNamespaces.
+     *
+     * @return  UsedNamespaces
+     */
+    public function getUsedNamespaces(): UsedNamespaces
+    {
+       return $this->usedNamespaces;
+    }
+
 
     // END getters and setters.
 
@@ -1206,7 +1274,7 @@ abstract class ElementBuilder
     abstract function write();
 
 
-    // Helper functions below this line.
+    // Helper functions below this line, to be used in child classes.
 
     /**
      * Get an attribute from the node.
@@ -1262,6 +1330,30 @@ abstract class ElementBuilder
     }
 
     /**
+     * Build a type for use in a docblock using the usedNamespaces object, or
+     * return 'variant' if empty string is passed.
+     *
+     * @param   string  $type
+     * @return  string
+     */
+    protected function buildFullyQualifiedClassOrType(string $type): string
+    {
+        if (!$this->usedNamespaces) {
+            throw new Exception(__METHOD__ . ':: usedNamespaces is not set.');
+        }
+
+        if (!$type) {
+            // Not defined, so could be anything.
+            return 'variant';
+        }
+
+        return $this->getUsedNamespaces()->fullyQualifiedName($type);
+    }
+
+
+    // Helper functions below this line.
+
+    /**
      * Convert the "keywords" attribute to an array and set the $keywords
      * property.
      *
@@ -1291,7 +1383,11 @@ class PropertyBuilder extends ElementBuilder
     {
         $docblock = new DocBlockBuilder($this->getFileWriter(), $this->getIndentlvl());
         $docblock->setDescription($this->getAttribute('doc'));
-        $docblock->addAttribute('var', [$this->getAttribute('type')]);
+        $docblock->addAttribute('var', [
+            $this->getUsedNamespaces()->fullyQualifiedName(
+                $this->getAttribute('type')
+            )
+        ]);
         $docblock->write();
 
         $this->writeDeclaration();
@@ -1417,11 +1513,14 @@ class PropertyBuilder extends ElementBuilder
      */
     private function writeMethodElToFile(DOMElement $el)
     {
-        (new MethodBuilder(
+        $methodDum = new MethodBuilder(
             $this->getFileWriter(),
             $el,
             $this->getIndentlvl()
-        ))->write();
+        );
+        $methodDum->setUsedNamespaces($this->getUsedNamespaces());
+
+        $methodDum->write();
     }
 
 }
@@ -1525,14 +1624,18 @@ class MethodBuilder extends ElementBuilder
      */
     private function writeDocblock()
     {
-        // Build docblock.
-        $docblock = new DocBlockBuilder($this->getFileWriter(), $this->getIndentlvl());
+        // Build docblock object and description.
+        $docblock = new DocBlockBuilder(
+            $this->getFileWriter(), $this->getIndentlvl());
         $docblock->setDescription(
-            getNodeText($this->getImmediateChildrenByName('doc')[0])
-        );
+            getNodeText($this->getImmediateChildrenByName('doc')[0]));
 
+        // Input lines.
         foreach ($this->getImmediateChildrenByName('input') as $input) {
-            $dets = [$input->getAttribute('type'), '$' . $input->getAttribute('name')];
+            $type = $this->buildFullyQualifiedClassOrType(
+                $input->getAttribute('type'));
+
+            $dets = [$type, '$' . $input->getAttribute('name')];
 
             if (strlen($input->getAttribute('desc')) > 0) {
                 $dets[] = $input->getAttribute('desc');
@@ -1541,17 +1644,13 @@ class MethodBuilder extends ElementBuilder
             $docblock->addAttribute('param', $dets);
         }
 
-        $returnVal = $this->getAttribute('return');
-        if (!$returnVal) {
-            // Not defined, so could be anything.
-            $returnVal = 'variant';
-        }
-        if (substr($returnVal, 0, 1) == '?') {
-            // Nullable type.
-            $returnVal = substr($returnVal, 1) . '|null';
-        }
+        // Return line.
+        $returnVal = $this->buildFullyQualifiedClassOrType(
+            $this->getAttribute('return'));
 
         $docblock->addAttribute('return', [$returnVal]);
+
+        // Write.
         $docblock->write();
 
     }
@@ -1587,7 +1686,7 @@ class MethodBuilder extends ElementBuilder
         $vis = $this->getVisibility();
         $stat = $this->isStatic() ? ' static' : '';
         $name = $this->getAttribute('name');
-        $args = implode(',', $this->buildArgumentsArray());
+        $args = implode(', ', $this->buildArgumentsArray());
 
         $returnType = $this->getAttribute('return');
 
@@ -1995,6 +2094,153 @@ class MacroProcessor
 
         return static::$macros[$key];
 
+    }
+
+}
+
+/**
+ * Manage namespaces and convert a class name to its fully-qualified name.
+ *
+ * Intended to be used only in docblocks.
+ *
+ * @author  Andrew Norman
+ */
+class UsedNamespaces
+{
+    /** @var array Map of class name to fully-qualified namespace. */
+    private $map;
+
+
+    // START getters and setters.
+
+    /**
+     * Setter for map.
+     *
+     * @param   array $input
+     * @return  void
+     */
+    public function setMap(array $input)
+    {
+        $this->map = $input;
+    }
+
+    /**
+     * Getter for map.
+     *
+     * @return  array
+     */
+    public function getMap(): array
+    {
+       return $this->map;
+    }
+
+
+    // END getters and setters.
+
+    /**
+     * Constructor, parsing the `use` element to build the map.
+     *
+     * @param   DOMNode|null    $useEl
+     * @return  void
+     */
+    public function __construct($useEl)
+    {
+        $this->map = [];
+
+        if (is_null($useEl)) {
+            // Nothing to do.
+            return;
+        }
+
+        foreach (getImmediateChildrenByName($useEl, 'use') as $child) {
+            $value = $child->getAttribute('value');
+            $strpos = strrpos($value, '\\');
+            $this->map[substr($value, $strpos+1)] = $value;
+        }
+    }
+
+    /**
+     * Get the fully-qualified namespace of a type if it exists.  Return
+     * input if it does not.
+     *
+     * (Note that this means can enter types that have no namespaces, like
+     * 'string', 'int', etc, and it will return normally.)
+     *
+     * @param   string  $type
+     * @return  string
+     */
+    public function fullyQualifiedName(string $type): string
+    {
+        $nullable = $this->strNullable($type);
+        $type = $this->extractNullable($type);
+
+        $map = $this->getMap();
+
+        if (array_key_exists($type, $map)) {
+            $returnVal = '\\' . $map[$type];
+        } elseif (!$this->isPrimitiveType($type)) {
+            $returnVal = '\\' . $type;
+        } else {
+            $returnVal = $type;
+        }
+
+        return $returnVal . $nullable;
+    }
+
+
+    // Helper functions below this line.
+
+    /**
+     * Determine if a type (name as string) is a primitive type (including
+     * scalar types, void, arrays, and resources).
+     *
+     * @param   string  $typename
+     * @return  bool
+     */
+    private function isPrimitiveType(string $typename): bool
+    {
+        return in_array($typename, [
+            'int',
+            'integer',
+            'float',
+            'double',
+            'string',
+            'bool',
+            'boolean',
+            'iterable',
+            'callable',
+            'void',
+            'array',
+            'resource',
+        ]);
+    }
+
+    /**
+     * Remove leading '?', if it exists.
+     *
+     * @param   string  $type
+     * @return  string
+     */
+    private function extractNullable(string $type): string
+    {
+        // Todo: Redo this, but with ltrim.
+        if (substr($type, 0, 1) == '?') {
+            return substr($type, 1);
+        }
+
+        return $type;
+    }
+
+    /**
+     * Return '|null' if variable type starts with '?', else return empty
+     * string.
+     *
+     * @param   string  $type
+     * @return  string
+     */
+    private function strNullable(string $type): string
+    {
+        return (substr($type, 0, 1) == '?') ? '|null' : '';
     }
 
 }

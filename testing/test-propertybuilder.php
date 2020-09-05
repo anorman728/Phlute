@@ -16,7 +16,11 @@ $writer->appendToFile('');
 $xml = <<<'__XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <testdoc>
-    <property type="string" name="myprop" default="7" doc="Test var." keywords="static"/>
+    <uses>
+        <use value="App\Model\MyModel"/>
+        <use value="App\View\MyView"/>
+    </uses>
+    <property type="StdClass" name="myprop" doc="Test var." keywords="static"/>
 </testdoc>
 __XML;
 
@@ -27,6 +31,7 @@ $dom->loadXML($xml);
 $el = $dom->getElementsByTagName('property')[0];
 
 $propertyBuilder = new PropertyBuilder($writer, $el, 1);
+$propertyBuilder->setUsedNamespaces(new UsedNamespaces($dom->getElementsByTagName('uses')[0]));
 
 $propertyBuilder->write();
 $propertyBuilder->writeSettersAndGetters();

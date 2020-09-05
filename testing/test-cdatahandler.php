@@ -15,8 +15,8 @@ $writer->appendToFile('<?php');
 
 //
 $writer->appendToFile('// We should expect this to have the');
-$writer->appendTOFile('// indentation "normalized", and by that I mean reduce the indentation of');
-$writer->appendTOFile('// each line until at least one line has zero indentation, and no further.');
+$writer->appendToFile('// indentation "normalized", and by that I mean reduce the indentation of');
+$writer->appendToFile('// each line until at least one line has zero indentation, and no further.');
 
 $writer->appendToFile('');
 
