@@ -1042,7 +1042,7 @@ class DocblockBuilder
                     $paragraph = substr($paragraph, $breakind+1);
                 }
 
-                $output[] = $outputDum;
+                $output[] = rtrim($outputDum);
             }
             if ($ind != $maxind) {
                 $output[] = $this->buildDocblockLine();
