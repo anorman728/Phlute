@@ -506,15 +506,16 @@ Things I want to come back to:
             + Not in uses
             - With and without backslash.
                 --Not necessarty.
-> Fix double-space problem.
++ Fix double-space problem in docblock description..
     * If there's a double-space on a line break, it causes a superflous end-of-line space.
-> Variant input types.
+    * I think easiest way to do this would just be to trim the lines.
+> Multiple types for inputs.
     > Docblocks
     > Signatures.
-> Variant return types.
+> Multiple types for return.
     * Looks like I already did variant return types in signatures.
     > Docblock
-> Variant type for properties.
+> Multiple types for properties.
     * When done with above, that may actually end up handling this.
 > interfaces
     * i.e., implements
