@@ -509,12 +509,20 @@ Things I want to come back to:
 + Fix double-space problem in docblock description..
     * If there's a double-space on a line break, it causes a superflous end-of-line space.
     * I think easiest way to do this would just be to trim the lines.
-> Multiple types for inputs.
-    > Docblocks
-    > Signatures.
-> Multiple types for return.
++ Multiple types for inputs.
+    + Docblocks
+        * I'm thinking this might need to be handled from the UsedNamespaces class, since types are going to be going through there all the time anyway.
+            * That *is* how nullables are handled, after all.
+        * But this is also going to be a little strange.  To be as robust as I'd like, I'll want to break apart by exploding it by "|".
+            * And the existing "fullyQualifiedName" will need to be moved to another function.
+    + Signatures.
+        * Just treat as variant if there's a "|" in the type.
+        * There's already a "dontEnforceReturnType" variable, but it's kind of stupidly organized.
+            * Because it shouldn't be just for return.
++ Multiple types for return.
     * Looks like I already did variant return types in signatures.
-    > Docblock
+    + Docblock
+        * Ended up being doing everything for docblocks at once.
 > Multiple types for properties.
     * When done with above, that may actually end up handling this.
 > interfaces
@@ -545,6 +553,8 @@ Things I want to come back to:
     * I did this as an easy way to prevent space at end of last function, but it's actually causing other problems.
     * If there are no use statements or variables or what-have-you, if the first thing in a class is a function, then there's an unwanted space.
     * I'm going to have to figure out another way to fix that last space.
+> Force overwrite.
+    * Basically, delete then write.
 
 ! This is the point where I would call this project probably effectively done for 1.0.
     * Though at this point I'm not actually versioning.

@@ -1690,13 +1690,10 @@ class MethodBuilder extends ElementBuilder
 
         $returnType = $this->getAttribute('return');
 
-        $dontEnforceReturnType = (
-            ($returnType == 'void')
-            || (strlen($returnType) == 0)
-            || (strpos($returnType, '|') != false)
-        );
-
-        $returnType = $dontEnforceReturnType ? '' : ": $returnType";
+        $returnType = $this->enforceReturnType($returnType)
+            ? ": $returnType"
+            : ''
+        ;
 
         $declaration = "{$vis}{$stat} function $name($args)$returnType";
 
@@ -1721,7 +1718,7 @@ class MethodBuilder extends ElementBuilder
             $returnEl = '$' . $input->getAttribute('name');
 
             $typedum = $input->getAttribute('type');
-            if (strlen($typedum) > 0) {
+            if ($this->enforceReturnType($typedum)) {
                 $returnEl = "$typedum $returnEl";
             }
 
@@ -1729,6 +1726,29 @@ class MethodBuilder extends ElementBuilder
         }
 
         return $returnArr;
+    }
+
+    /**
+     * Determine if want to enforce type.  For both parameters and outputs.
+     *
+     * @param   string  $type
+     * @return  bool
+     */
+    private function enforceReturnType(string $type): bool
+    {
+        if ($type == 'void') {
+            return false;
+        }
+
+        if (strlen($type) == 0) {
+            return false;
+        }
+
+        if (strpos($type, '|') !== false) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -2171,24 +2191,43 @@ class UsedNamespaces
      */
     public function fullyQualifiedName(string $type): string
     {
-        $nullable = $this->strNullable($type);
-        $type = $this->extractNullable($type);
+        $parts = explode('|', $type);
+        $returnArr = [];
 
-        $map = $this->getMap();
-
-        if (array_key_exists($type, $map)) {
-            $returnVal = '\\' . $map[$type];
-        } elseif (!$this->isPrimitiveType($type)) {
-            $returnVal = '\\' . $type;
-        } else {
-            $returnVal = $type;
+        foreach ($parts as $typepart) {
+            $returnArr[] = $this->fullyQualifiedNamePart($typepart);
         }
 
-        return $returnVal . $nullable;
+        return implode('|', $returnArr);
     }
 
 
     // Helper functions below this line.
+
+    /**
+     * Get the fully-qualified namespace of a type if it exists, for one
+     * particular part.
+     *
+     * @param   string  $typepart
+     * @return  string
+     */
+    private function fullyQualifiedNamePart(string $typepart): string
+    {
+        $nullable = $this->strNullable($typepart);
+        $typepart = $this->extractNullable($typepart);
+
+        $map = $this->getMap();
+
+        if (array_key_exists($typepart, $map)) {
+            $returnVal = '\\' . $map[$typepart];
+        } elseif (!$this->isPrimitiveType($typepart)) {
+            $returnVal = '\\' . $typepart;
+        } else {
+            $returnVal = $typepart;
+        }
+
+        return $returnVal . $nullable;
+    }
 
     /**
      * Determine if a type (name as string) is a primitive type (including
@@ -2223,12 +2262,7 @@ class UsedNamespaces
      */
     private function extractNullable(string $type): string
     {
-        // Todo: Redo this, but with ltrim.
-        if (substr($type, 0, 1) == '?') {
-            return substr($type, 1);
-        }
-
-        return $type;
+        return ltrim($type, '?');
     }
 
     /**

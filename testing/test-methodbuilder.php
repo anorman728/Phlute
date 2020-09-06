@@ -20,10 +20,10 @@ $xml = <<<'__XML'
         <use value="App\Model\MyModel"/>
         <use value="App\View\MyView"/>
     </uses>
-    <method name="myfunction" return="MyView|MyModel">
+    <method name="myfunction" return="string">
         <doc>This is a function.</doc>
-        <input type="string" name="myvariable" desc="This is a variable."/>
-        <input type="?MyModel" name="model" desc="Model"/>
+        <input type="string|int" name="myvariable" desc="This is a variable."/>
+        <input type="bool" name="model" desc="Model"/>
         <content><![CDATA[<?
             $this->setArray([
                 1,
