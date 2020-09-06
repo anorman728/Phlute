@@ -4,7 +4,7 @@
     <macros><!-- Macros only apply to node content, not attributes, and *not* to CDATA content. -->
         <macro name="mymac">This is a macro.  This is $1, the first argument, and this is $2, the second argument.</macro>
     </macros>
-    <class name="MyClass" author="Andrew Norman" namespace="App\Lib" extends="ParentClass">
+    <class name="MyClass" author="Andrew Norman" namespace="App\Lib" extends="ParentClass" implements="Metric Shape">
         <superdocs>
             <superdoc>This is a docblock that appears before the other docblock.  It's for extra notes that don't quite fit what the class docblock needs to be.</superdoc>
             <superdoc>There can be multiple superdocs.</superdoc>

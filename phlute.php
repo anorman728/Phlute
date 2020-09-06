@@ -398,6 +398,24 @@ class ClassBuilder
     }
 
     /**
+     * Pull the interfaces (implements).
+     *
+     * If there are no interfaces, returns an empty string.
+     *
+     * @return  string
+     */
+    private function pullImplement(): string
+    {
+        $interfaces = $this->getClassNode()->getAttribute('implements');
+
+        if (strlen($interfaces) == 0) {
+            return '';
+        }
+
+        return ' implements ' . str_replace(' ', ', ', $interfaces);
+    }
+
+    /**
      * Create 'abstract ' to put before class declaration, or empty string if
      * not an abstract class.
      *
@@ -528,6 +546,7 @@ class ClassBuilder
         $openline.= 'class ';
         $openline.= $this->pullClassName();
         $openline.= $this->pullExtension();
+        $openline.= $this->pullImplement();
 
         $this->getFileWriter()->appendToFile($openline);
         $this->getFileWriter()->appendToFile('{');

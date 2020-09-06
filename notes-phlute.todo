@@ -523,10 +523,15 @@ Things I want to come back to:
     * Looks like I already did variant return types in signatures.
     + Docblock
         * Ended up being doing everything for docblocks at once.
-> Multiple types for properties.
++ Multiple types for properties.
     * When done with above, that may actually end up handling this.
-> interfaces
+        * It did.
++ interfaces
     * i.e., implements
+    * This is *using* interfaces, not making them.
+    * I'm tempted to skip this since I basically never use interfaces.
+        * Even though nobody else will use this, though, I just feel compelled to do it.
+    * This is going to be in openClass, I think.
 > If information is small enough, docblock needs to go on one line.
 > Public properties
 > 'throws" attribute for functions.
@@ -545,6 +550,7 @@ Things I want to come back to:
 - Added comment for // todo and markasincomplete.
     * Because I want to put //dmz1 in there.
     --For the time being, I'm not doing automatic test files.
+        * Retrospective:  I don't quite know what I meant by this, but there's not much reason to put something in addition, since it's just going to be the same as using CDATA.
 > Filter
     * I want to be able to pass a filter that matches class names, so only class names are built that match that pattern.
 > Delete files
@@ -555,6 +561,10 @@ Things I want to come back to:
     * I'm going to have to figure out another way to fix that last space.
 > Force overwrite.
     * Basically, delete then write.
+> Make traits
+    * Can use them up until now, but can't create them.
+    * Will actually probably just want to make this basically a class object.  It's almost exactly the same thing.
+> Make interfaces.
 
 ! This is the point where I would call this project probably effectively done for 1.0.
     * Though at this point I'm not actually versioning.

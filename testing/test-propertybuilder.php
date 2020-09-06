@@ -20,7 +20,7 @@ $xml = <<<'__XML'
         <use value="App\Model\MyModel"/>
         <use value="App\View\MyView"/>
     </uses>
-    <property type="StdClass" name="myprop" doc="Test var." keywords="static"/>
+    <property type="string" default="7" name="myprop" doc="Test var." keywords="static"/>
 </testdoc>
 __XML;
 
