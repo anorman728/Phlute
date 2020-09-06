@@ -67,7 +67,7 @@ Putting a literal "$1" in the macro, a literal double-quote in an argument, and 
 
 ### class
 
-The `class` element defines a class.  Its required attributes are `name` and `namespace`.  It's optional attributes are `extends`, `author`, and `keywords`.
+The `class` element defines a class.  Its required attributes are `name` and `namespace`.  It's optional attributes are `extends`, `implements`, `author`, and `keywords`.
 
 The `extends` attribute does not need to have a fully-qualified namespace, assuming that you properly reference the namespace.  What you put there is exactly what will be put in the class declaration.
 
