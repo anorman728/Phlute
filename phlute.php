@@ -810,6 +810,18 @@ class DocblockBuilder
     private $description;
 
 
+    // Class contants
+
+    /** @var string Opening a docblock. */
+    const OPEN_DOCBLOCK = '/**';
+
+    /** @var string Closing a docblock. */
+    const CLOSE_DOCBLOCK = ' */';
+
+    /** @var int The upper bound, exclusive, of the line length. */
+    const LENGTH_LESS_THAN = 81;
+
+
     // START getters and setters.
 
     /**
@@ -940,6 +952,11 @@ class DocblockBuilder
      */
     public function write()
     {
+        if ($this->isSingleLine()) {
+            $this->getFileWriter()->appendToFile($this->singleLineDoc());
+            return;
+        }
+
         $this->initializeDocblock();
 
         $this->writeDescriptionToFile();
@@ -966,7 +983,7 @@ class DocblockBuilder
     private function initializeDocblock()
     {
         $this->getFileWriter()->appendToFile(
-            buildIndent($this->getIndentLvl()) . '/**'
+            buildIndent($this->getIndentLvl()) . static::OPEN_DOCBLOCK
         );
     }
 
@@ -978,7 +995,7 @@ class DocblockBuilder
     private function finalizeDocblock()
     {
         $this->getFileWriter()->appendToFile(
-            buildIndent($this->getIndentLvl()) . ' */'
+            buildIndent($this->getIndentLvl()) . static::CLOSE_DOCBLOCK
         );
     }
 
@@ -1036,7 +1053,7 @@ class DocblockBuilder
 
         $str = preg_replace('/[\r\n](\s+)?[\r\n]/', "##PARA4672##\r\n", $str);
         // Replace paragraph breaks with marker.
-        $str = preg_replace('/[\r\n](\s)+/', ' ' , $str);
+        $str = preg_replace('/[\r\n](\s)+/', '' , $str);
         // Remove whitespace after line breaks.
         $paragraphs = explode('##PARA4672##', $str);
         // Break paragraphs into different strings.
@@ -1045,14 +1062,10 @@ class DocblockBuilder
         $maxind = count($paragraphs) - 1;
 
         foreach ($paragraphs as $ind => $paragraph) {
-            $paragraph = trim($paragraph);
-            // Not 100% sure why this is necessary, but there seems to be an
-            // extra space before each paragraph otherwise.
-
             while (strlen($paragraph) > 0) {
                 $paragraph = $this->buildDocblockLine($indent . $paragraph);
 
-                if(strlen($paragraph) < 81) {
+                if(strlen($paragraph) <= static::LENGTH_LESS_THAN) {
                     $outputDum = $paragraph;
                     $paragraph = '';
                 } else {
@@ -1088,7 +1101,7 @@ class DocblockBuilder
         string $defname,
         array $contentArr
     ): array {
-        $line1 = $this->buildDocblockLine('@' . $defname);
+        $line1 = $this->buildDocblockline($this->attDefForm($defname));
         $line1 = addPseudoTab($line1);
         $line1.= $contentArr[0];
 
@@ -1125,6 +1138,65 @@ class DocblockBuilder
             }
 
         }
+    }
+
+    /**
+     * Build the full docblock as a single line, assuming that there's one or
+     * fewer attributes and only one element in that attributes `data`.
+     *
+     * @return  string
+     */
+    private function singleLineDoc(): string
+    {
+        $returnStr = buildIndent($this->getIndentlvl());
+        $returnStr.= static::OPEN_DOCBLOCK;
+
+        $atts = $this->getAttributeArrays();
+        if (count($atts) > 0) {
+            $returnStr.= ' ' . $this->attDefForm($atts[0]['type']);
+            $returnStr.= ' ' . $atts[0]['data'][0];
+        }
+
+        $returnStr.= ' ' . $this->getDescription();
+        $returnStr.= static::CLOSE_DOCBLOCK;
+
+        return $returnStr;
+    }
+
+    /**
+     * Determine if docblock would fit on a single line.
+     *
+     * @return  bool
+     */
+    private function isSingleLine(): bool
+    {
+        $attArr = $this->getAttributeArrays();
+
+        if (count($attArr) > 1) {
+            return false;
+        }
+
+        if ((count($attArr) == 1) && (count($attArr[0]['data']) > 1)) {
+            return false;
+        }
+
+        if (strlen($this->singleLineDoc()) >= static::LENGTH_LESS_THAN) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Return string with '@' appended to front-- Format for attribute
+     * "definition".
+     *
+     * @param   string  $input
+     * @return  string
+     */
+    private function attDefForm(string $input): string
+    {
+        return '@' . $input;
     }
 
 }

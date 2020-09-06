@@ -532,7 +532,30 @@ Things I want to come back to:
     * I'm tempted to skip this since I basically never use interfaces.
         * Even though nobody else will use this, though, I just feel compelled to do it.
     * This is going to be in openClass, I think.
-> If information is small enough, docblock needs to go on one line.
++ If information is small enough, docblock needs to go on one line.
+    * And also assuming that there's no more than one attribute.
+    * And assuming that that one attribute has no more than one element in `data`.
+    * Trying to figure out how to organize this:
+        * Function singleLineDoc()
+            * Builds full line.
+            * Assuming that there's one or fewer attributes and only one element in `data`.
+        * Function isSingleLine
+            * Returns false if more than one attribute (but no attributes allowed).
+            * Returns false if the one attribute, if it exists, has more than one element in `data`.
+            * Returns false if singleLineDoc() is too long.
+                * Not sure off the top of my head what would constitute too long, but I know there's got to be something for this already since the descriptions are being wrapped correctly.
+                    * So, this is in buildDocblockDescArray, which is used in both the attribute descriptions and in the main description.
+                    * And it's hardcoded, checking lines longer than 80.
+                    * I could make a class constant-- LENGTH_STRICTLY_LESS_THAN.
+            * Else return true.
+        * Updates to write.
+            * If isSingleLine, write singleLineDoc() to file.
+            * Else, do what it does now.
+> Forcibly disallow single-line docblocks.
+    * By that I don't mean input option, but that I never want method docblocks to be single-line.  I only want that for properties and constants.
+    * Also class docblocks should never be single line.
+    * But superdocs can be.
+    * Strangely enough, while testing the property builder, I found this exact situation.
 > Public properties
 > 'throws" attribute for functions.
 > Signature needs to be multiline if too long.
