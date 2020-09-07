@@ -520,6 +520,7 @@ class ClassBuilder
     private function appendDocblock()
     {
         $docBuilder = new DocblockBuilder($this->getFileWriter());
+        $docBuilder->setForceVertical(true);
 
         // Description.
         $docBuilder->setDescription(getNodeText(
@@ -809,6 +810,9 @@ class DocblockBuilder
     /** @var string Description string. */
     private $description;
 
+    /** @var bool Force "vertical" mode (i.e., don't allow one-line docblock. */
+    private $forceVertical = false;
+
 
     // Class contants
 
@@ -911,6 +915,28 @@ class DocblockBuilder
     {
         return $this->attributeArrays;
     }
+
+    /**
+     * Setter for forceVertical.
+     *
+     * @param   bool $input
+     * @return  void
+     */
+    public function setForceVertical(bool $input)
+    {
+        $this->forceVertical = $input;
+    }
+
+    /**
+     * Getter for forceVertical.
+     *
+     * @return  bool
+     */
+    public function getForceVertical(): bool
+    {
+        return $this->forceVertical;
+    }
+
 
     // END getters and setters.
 
@@ -1170,6 +1196,10 @@ class DocblockBuilder
      */
     private function isSingleLine(): bool
     {
+        if ($this->getForceVertical()) {
+            return false;
+        }
+
         $attArr = $this->getAttributeArrays();
 
         if (count($attArr) > 1) {
@@ -1720,6 +1750,7 @@ class MethodBuilder extends ElementBuilder
             $this->getFileWriter(), $this->getIndentlvl());
         $docblock->setDescription(
             getNodeText($this->getImmediateChildrenByName('doc')[0]));
+        $docblock->setForceVertical(true);
 
         // Input lines.
         foreach ($this->getImmediateChildrenByName('input') as $input) {

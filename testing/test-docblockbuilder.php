@@ -37,5 +37,6 @@ $writer->appendToFile('');
 $docblockbuilder = new DocblockBuilder($writer, 1);
 $docblockbuilder->setDescription('This is a string docblock.');
 $docblockbuilder->addAttribute('var', ['string']);
+//$docblockbuilder->setForceVertical(true);
 
 $docblockbuilder->write();
