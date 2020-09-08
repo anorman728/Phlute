@@ -32,6 +32,7 @@ $el = $dom->getElementsByTagName('property')[0];
 
 $propertyBuilder = new PropertyBuilder($writer, $el, 1);
 $propertyBuilder->setUsedNamespaces(new UsedNamespaces($dom->getElementsByTagName('uses')[0]));
+$propertyBuilder->setVisibility('public');
 
 $propertyBuilder->write();
 $propertyBuilder->writeSettersAndGetters();

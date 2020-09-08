@@ -559,10 +559,83 @@ Things I want to come back to:
     + Add option.
     + Add to method docblocks.
     + Add to class docblocks.
-> Public properties
++ Public properties
+    * And I guess protected, too.
+    * And I guess this shouldn't impact getters and setters.  If want to make public without getter or setter, I can just disable the getter and setter just like I already do.
+    * I want this to be consistent with public/private/protected methods.  But I also want properties to have the option of not requiring <private> tab.
+    * So, this is what I'm thinking-- For *both* methods and properties, if not a child of public/private/protected tag, then default to private.
+    * But that's for how I want the XML to work.  For now, I need to actually make properties have visibility.
+    + PropertyBuilder updates.
+        * Defaulting to private.
+        ! Consider abstracting this to a trait, or something.
+            * Might actually make an abstract class that extends an abstract class, then make MethodBuilder and PropertyBuilder child classes of that class.
+        * So, right now I want to make an abstract class child of ElementBuilder.
+            * What do I call it?  It's for both properties and methods.  The point is visibility.
+            * MemberBuilder?
+            * That said, I actually generally don't like extending an extended class.
+            * The alternative is to make a trait.
+                * And I think I like this idea.  "VisibilityTrait".
+        * I want to basically just take all of the "visibility" stuff from MethodBuilder and basically put it in this.
+        * Okay, I've abstracted it to a trait, so now I need to add that trait to PropertyBuilder.
+        * Added the trait, so now I need to actually *use* the trait.
+        * This should be as simple as just wherever it says "private" replace it with the visibility.
+    + MethodBuilder updates.
+        + Default needs to be private, not public.
+            * Ended up doing this when abstracted to trait.
+    + ClassBuilder updates
+        * Okay, I'm trying to think through this.
+            * And I may end up deleting everything below.
+            * I want to end up using recursion in some way, and there's going to be a loop in there.
+            * Function(el, ?$vis)
+                * For each child element, 
+                    * If method element, then create method.  If $vis not null, then set it.
+                    * Else take the element name, and run function(subel, element name).
+            * Doing the above in an abstract way that applies to both properties and methods may be difficult.  May need to use callback functions, which I don't like doing in PHP.
+        * After making witePropertiesOrMethodsLoop, this is *definitely* a "Wow, it worked" moment.
+        - Properties.
+            > Loop through all child elements of the `properties` element.
+            > If child is `property` element, then instantiate method.
+            > Else recursively call this loop function, with the visibility set.
+        - Methods.
+            > Loop through all child elements of the `methods` element.
+            > If child is `method` element, then instantiate method.
+            > Else recursively call this loop function, with the visibility set.
+        * I'd assume that I'm going to abstract some of the code for the two above.
+        --Above canceled because it took a pretty different form.
+        + Rewrite appendMethods using writePropertiesOrMethodsLoop.
+        + Rewrite appendProperties using writePropertiesOrMethodsLoop.
+            * ...Oh, crap.  There's also constants.
+            * Well... Technically, I can just ignore that part and it should work fine.  I don't have to deal with visibility with constants, and the switch in writePropertiesOrMethodsLoop will ignore all of the constant nodes for the same reason those whitespace text nodes are ignored.
+            * I could also make constants a special case in the switch.
+                * But I don't like that so much because that means not having writePropertiesOrMethodsLoop agnostic, and it also means putting more logic in there than I'd like.  Since it's recursive already, it should remain as simple as possible.
+            * I *really* hate do to it this way, but I think that just having writePropertiesOrMethodsLoop ignore constants will be best.  And keep treating the constants separately.
+            * Okay-- New problem.  I very specifically designed $propertiesArr to be used, to write the getters and setters at a later time.
+                * And it turns out that "use" is passed by value, not reference.
+                * But maybe I can trick it with an "ArrayObject" instead of an array.
+                * Okay-- Solved by using ArrayObject instead of an array.
+            * I have a new "problem" now.
+                * The callables that I'm passing to writePropertiesOrMethodsLoop are so similar that I just found a way to avoid it altogether.
+                * In a sense, it would make it less versatile.
+                * But I think that overall, it would be good.
+                * While *technically*, using these callback functions kinda looks good, the code would be a whole lot clearer without it.
+                * On the other hand-- These look really similar because these two classes use the same visibility trait.
+                * While writePropertiesOrMethodsLoop is very much designed with visibility in mind, I just kind of don't like the idea of assuming that everything going forward being passed will always use that.
+                * Even moreso, I feel like errors could be *much* more difficult to debug.  With my other idea, the code block that instantiates the object wouldn't be the same code block that calls "setVisibility".  I could easily see "why the heck is setVisibility being called here" becoming a problem.
+                * But there is still something I can do-- Abstract the inside of this function.
+                    * But... Where?
+                    * Okay, nevermind, not quite that.
+                * Well, I guess I'll call it good for now.
+    + Update README.
+> Comments between methods.
+    * The "methods" element needs to be able to handle `<comment>` elements, which allows creating new comments between elements.
+    * Which should use macros.
+    * This is mostly inspired by wanting to keep having the "Helper functions below this line" comment after previous changes.
 > 'throws" attribute for functions.
+    * Will need to use usedNamespaces for this.
 > Signature needs to be multiline if too long.
 > Pass by reference.
+    * Reminder: Don't use & in XML.  It needs to be &amp;, and I probably don't want to do it that way, anyway.
+    * My current thinking is `passby="ref"`.  Default value of `passby` would be `"val"`.
 > Custom setters and getters.
     * Since the whole point of setters and getters is to make them more versatile for doing other things.
 > Property doc attribute needs to optionally be a doc child element.

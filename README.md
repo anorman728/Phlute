@@ -107,6 +107,8 @@ Type currently must be defined and that will be enforced in the resulting getter
 
 An optional attribute for `property` elements is the `keywords` attribute.  A `property` element can have one keyword, and that is the `static` keyword.  If it is declared as static, its corresponding getters and setters will be static.
 
+If a `property` element is an immediate child of the `properties` element, then it will have private visibility.  This is the default setting.  To have public or protected properties in the end result, you'll need to create a `public` or `protected` element as a child of the `properties` element and define a new `property` as a child element of that new `public`/`protected` element.  An example of this appears in phlute-input.xml.  (If you want consistency, you *can* create a `private` element, so all `property` elements are two generations removed from `properties`, including the private properties.)  (I *typically* never use anything other than private properties, so I usually don't bother with visibility at all and let the getters and setters handle it.  But there are still times when it's worthwhile to have a public or protected property.)
+
 Constants will always appear before properties.  They naturally do not have getters and setters.  Their attributes are `name`, `type`, `doc`, and `value`, all of which are required (but may not actually cause an exception if missing).
 
 ### methods
@@ -130,3 +132,5 @@ You can have as few or as many `input` elements as you like.  Its attributes are
 The `content` element is optional and contains PHP within CDATA tags.  (This is similar to how an RSS feed would contain HTML within CDATA tags.)  (This is also why there's a modeline towards the beginning of the example file-- I modified the xml syntax highlighter for Vim to highlight the inside of CDATA as PHP.
 
 `<?`, `<?php`, and `?>` at the beginning and end of the CDATA content is ignored.  Everything within this is dumped into the file contents in the output.  If there is no `content` tag, then the content of the function just contains a `// Todo.` comment.
+
+Visibility for methods works exactly like properties-- It defaults to private, but can be made public or protected by making them children of a `public` or `protected` element.  (For methods, I generally like to use that for all of them.)

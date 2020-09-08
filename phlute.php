@@ -590,6 +590,10 @@ class ClassBuilder
     /**
      * Append properties to file.
      *
+     * Note: This method does some kinda funky stuff.  I'd like to fix it, but
+     * I'm not sure what the best way to go about doing it would be atm.  I may
+     * want to refactor it in the future.
+     *
      * @return  void
      */
     private function appendProperties()
@@ -609,24 +613,29 @@ class ClassBuilder
         }
 
 
-        // Now handle the properties.
+        // Now handle the properties.  (This contains the funky stuff.)
+        $writer = $this->getFileWriter();
+        $usedNamespaces = $this->getUsedNamespaces();
+        $propertiesArr = new ArrayObject();
+        // Using ArrayObject as a hacky way to pass by reference through "use".
+        // This... Could probably use a refactor.
 
-        $propertiesArr = [];
-        $propertiesRaw = getImmediateChildrenByName($properties, 'property');
+        $dummyFunc = function(DOMNode $el, string $vis) use ($writer, $usedNamespaces, $propertiesArr) {
+            $propDum = new PropertyBuilder($writer, $el, 1);
+            $propDum->setUsedNamespaces($usedNamespaces);
+            if ($vis) {
+                $propDum->setVisibility($vis);
+            }
+            $propDum->write();
 
-        // Collect all properties into array.
-        foreach ($propertiesRaw as $childNode) {
-            $propertyDum = new PropertyBuilder(
-                $this->getFileWriter(), $childNode, 1);
-            $propertyDum->setUsedNamespaces(
-                $this->getUsedNamespaces());
-            $propertiesArr[] = $propertyDum;
-        }
+            $propertiesArr->append($propDum);
+        };
 
-        // Actually add the properties.
-        foreach ($propertiesArr as $property) {
-            $property->write();
-        }
+        $this->writePropertiesOrMethodsLoop($properties, 'property', $dummyFunc);
+        // Note: $properties contains constants, but
+        // writePropertiesOrMethodsLoop will ignore those elements, because the
+        // tag name is not "property", "private", "public", or "protected".
+
 
         // Add the getters and setters.
         $this->getFileWriter()->appendToFile('');
@@ -658,35 +667,68 @@ class ClassBuilder
             return;
         }
 
-        foreach (['public', 'protected', 'private'] as $group) {
-            $methodParentObject = getFirstImmediateChildByName($allMethods, $group);
+        $writer = $this->getFileWriter();
+        $usedNamespaces = $this->getUsedNamespaces();
 
-            if (is_null($methodParentObject)) {
-                // User did not define any of this type of method.
-                continue;
+        $dummyFunc = function(DOMNode $el, string $vis) use ($writer, $usedNamespaces) {
+            $methodBuilder = new MethodBuilder($writer, $el, 1);
+            $methodBuilder->setUsedNamespaces($usedNamespaces);
+            if ($vis) {
+                $methodBuilder->setVisibility($vis);
             }
+            $methodBuilder->write();
+        };
 
-            $methods = getImmediateChildrenByName($methodParentObject, 'method');
+        $this->writePropertiesOrMethodsLoop($allMethods, 'method', $dummyFunc);
+    }
 
-            if (count($methods) == 0) {
-                // User created parent element, but put in no methods.
-                continue;
-            }
-
-            if ($group == 'private') {
-                for ($i = 0; $i < 2; $i++) {
-                    $this->getFileWriter()->appendToFile('');
-                }
-                $this->getFileWriter()->appendToFile(
-                    '// Helper functions below this line.', 1);
-            }
-
-            foreach ($methods as $method) {
-                $methodBuilder = new MethodBuilder(
-                    $this->getFileWriter(), $method, 1);
-                $methodBuilder->setUsedNamespaces($this->getUsedNamespaces());
-                $methodBuilder->setVisibility($group);
-                $methodBuilder->write();
+    /**
+     * Loop through child elements and run callback function on each element, if
+     * it's proper type.
+     *
+     * (Note: I generally don't like using callable in PHP because I think it
+     * makes the code more convoluted, but it really works out well here.)
+     *
+     * TODO: Better docblock here.  I feel like it isn't very clear what this
+     * does.
+     *
+     * @param   DOMNode         $el
+     *  Parent element.
+     * @param   string          $elementName
+     *  "method" or "property".
+     * @param   callable        $handleFunction
+     *  Function to actually handle what to do with the elements when they're
+     *  found.  Needs to take in DOMNode as first argument and nullable string
+     *  for second argument, as the visibility will be passed to it.
+     * @param   string          $vis
+     *  Visibility-- Not set if empty string.  Optional, defaulting to empty.
+     */
+    private function writePropertiesOrMethodsLoop(
+        DOMNode    $el,
+        string     $elementName,
+        callable   $handleFunction,
+        string     $vis = ''
+    ) {
+        foreach ($el->childNodes as $childNode) {
+            switch ($childNode->nodeName) {
+                case $elementName:
+                    $handleFunction($childNode, $vis);
+                    break;
+                case 'private':
+                case 'public':
+                case 'protected':
+                    $this->writePropertiesOrMethodsLoop(
+                        $childNode,
+                        $elementName,
+                        $handleFunction,
+                        $childNode->nodeName
+                    );
+                    break;
+                default:
+                    // Probably something dumb like "TextNode" or something
+                    // meaningless from whitespace, so all we can do here is
+                    // silently fail.
+                    break;
             }
         }
     }
@@ -1496,6 +1538,8 @@ abstract class ElementBuilder
  */
 class PropertyBuilder extends ElementBuilder
 {
+    use VisibilityTrait;
+
     /**
      * {@inheritDoc}
      *
@@ -1538,7 +1582,8 @@ class PropertyBuilder extends ElementBuilder
     private function writeDeclaration()
     {
         $stat = $this->isStatic() ? 'static ' : '';
-        $declaration = "private {$stat}\$" . $this->getAttribute('name');
+        $vis = $this->getVisibility();
+        $declaration = "$vis {$stat}\$" . $this->getAttribute('name');
 
         if (strlen($this->getAttribute('default')) > 0) {
             $declaration.= ' = ' . $this->buildValueString('default', 'type');
@@ -1640,6 +1685,7 @@ class PropertyBuilder extends ElementBuilder
             $this->getIndentlvl()
         );
         $methodDum->setUsedNamespaces($this->getUsedNamespaces());
+        $methodDum->setVisibility('public'); // Getters and setters always public.
 
         $methodDum->write();
     }
@@ -1696,30 +1742,7 @@ class ConstantBuilder extends ElementBuilder
  */
 class MethodBuilder extends ElementBuilder
 {
-    /** @var string Visibility, as plain string. */
-    private $visibility = 'public';
-
-    /**
-     * Setter for visibility.
-     *
-     * @param   string $input
-     * @return  void
-     */
-    public function setVisibility(string $input)
-    {
-        $this->visibility = $input;
-    }
-
-    /**
-     * Getter for visibility.
-     *
-     * @return  string
-     */
-    public function getVisibility(): string
-    {
-       return $this->visibility;
-    }
-
+    use VisibilityTrait;
 
     /**
      * {@inheritDoc}
@@ -1903,6 +1926,39 @@ class MethodBuilder extends ElementBuilder
     private function isAbstract(): bool
     {
         return in_array('abstract', $this->getKeywords());
+    }
+
+}
+
+/**
+ * Handle visibility.
+ *
+ * @author  Andrew Norman
+ */
+trait VisibilityTrait
+{
+    /** @var string Visibility, as plain string. */
+    private $visibility = 'private';
+
+    /**
+     * Setter for visibility.
+     *
+     * @param   string $input
+     * @return  void
+     */
+    public function setVisibility(string $input)
+    {
+        $this->visibility = $input;
+    }
+
+    /**
+     * Getter for visibility.
+     *
+     * @return  string
+     */
+    public function getVisibility(): string
+    {
+       return $this->visibility;
     }
 
 }

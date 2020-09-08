@@ -23,6 +23,9 @@
         <properties>
             <property type="int" name="count" default="1" doc="The count."/>
             <property type="string" setter="0" name="name" doc="The name of the object."/>
+            <public>
+                <property type="string" name="height" default="5'6\&quot;" doc="This should be public." setter="0" getter="0"/>
+            </public>
         </properties>
         <methods>
             <public>
