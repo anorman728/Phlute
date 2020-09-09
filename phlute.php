@@ -855,14 +855,32 @@ class DocblockBuilder
     /** @var bool Force "vertical" mode (i.e., don't allow one-line docblock. */
     private $forceVertical = false;
 
+    /**
+     * Decorations (key-value pairs describing what the docblock looks like).
+     *
+     * @var array
+     */
+    private $decorations;
+
 
     // Class contants
 
-    /** @var string Opening a docblock. */
-    const OPEN_DOCBLOCK = '/**';
+    /** @var array Decorations for typical docblock. */
+    const DECORATIONS__DOC_BLOCK = [
+        'open'                      => '/**',
+        'line_start'                => ' *',
+        'close'                     => ' */',
+        'single_line_compatible'    => true,
+    ];
 
-    /** @var string Closing a docblock. */
-    const CLOSE_DOCBLOCK = ' */';
+    /** @var array Decorations for line comment. */
+    const DECORATIONS__LINE_COMMENT = [
+        'open'                     => null,
+        'line_start'               => '//',
+        'close'                    => null,
+        'single_line_compatible'   => false,
+    ];
+
 
     /** @var int The upper bound, exclusive, of the line length. */
     const LENGTH_LESS_THAN = 81;
@@ -979,6 +997,27 @@ class DocblockBuilder
         return $this->forceVertical;
     }
 
+    /**
+     * Setter for decorations.
+     *
+     * @param   array $input
+     * @return  void
+     */
+    public function setDecorations(array $input)
+    {
+        $this->decorations = $input;
+    }
+
+    /**
+     * Getter for decorations.
+     *
+     * @return  array
+     */
+    public function getDecorations(): array
+    {
+        return $this->decorations;
+    }
+
 
     // END getters and setters.
 
@@ -994,6 +1033,7 @@ class DocblockBuilder
     {
         $this->setFileWriter($fileWriter);
         $this->setIndentlvl($indentlvl);
+        $this->useDocblockDecorations();
     }
 
     /**
@@ -1041,6 +1081,29 @@ class DocblockBuilder
     }
 
 
+    // Decoration setting functions below.
+
+    /**
+     * Use docblock decorations.
+     *
+     * @return  void
+     */
+    public function useDocblockDecorations()
+    {
+        $this->setDecorations(static::DECORATIONS__DOC_BLOCK);
+    }
+
+    /**
+     * Use line comment decorations.
+     *
+     * @return  void
+     */
+    public function useLineCommentDecorations()
+    {
+        $this->setDecorations(static::DECORATIONS__LINE_COMMENT);
+    }
+
+
     // Helper functions below this line.
 
     /**
@@ -1050,8 +1113,14 @@ class DocblockBuilder
      */
     private function initializeDocblock()
     {
+        $open = $this->getDecorations()['open'];
+
+        if (is_null($open)) {
+            return;
+        }
+
         $this->getFileWriter()->appendToFile(
-            buildIndent($this->getIndentLvl()) . static::OPEN_DOCBLOCK
+            buildIndent($this->getIndentLvl()) . $open
         );
     }
 
@@ -1062,8 +1131,14 @@ class DocblockBuilder
      */
     private function finalizeDocblock()
     {
+        $close = $this->getDecorations()['close'];
+
+        if (is_null($close)) {
+            return;
+        }
+
         $this->getFileWriter()->appendToFile(
-            buildIndent($this->getIndentLvl()) . static::CLOSE_DOCBLOCK
+            buildIndent($this->getIndentLvl()) . $close
         );
     }
 
@@ -1085,9 +1160,15 @@ class DocblockBuilder
      */
     private function buildDocblockLine($content = ''): string
     {
+        $startline = $this->getDecorations()['line_start'];
+
+        if (is_null($startline)) {
+            return;
+        }
+
         $sp = (strlen($content) == 0) ? '' : ' ';
 
-        return buildIndent($this->getIndentLvl()) . ' *' . $sp . $content;
+        return buildIndent($this->getIndentLvl()) . $startline . $sp . $content;
     }
 
     /**
@@ -1217,7 +1298,12 @@ class DocblockBuilder
     private function singleLineDoc(): string
     {
         $returnStr = buildIndent($this->getIndentlvl());
-        $returnStr.= static::OPEN_DOCBLOCK;
+
+        $dec = $this->getDecorations();
+
+        if (!is_null($dec['open'])) {
+            $returnStr.= $dec['open'];
+        }
 
         $atts = $this->getAttributeArrays();
         if (count($atts) > 0) {
@@ -1226,7 +1312,9 @@ class DocblockBuilder
         }
 
         $returnStr.= ' ' . $this->getDescription();
-        $returnStr.= static::CLOSE_DOCBLOCK;
+        if (!is_null($dec['close'])) {
+            $returnStr.= $dec['close'];
+        }
 
         return $returnStr;
     }
@@ -1238,6 +1326,10 @@ class DocblockBuilder
      */
     private function isSingleLine(): bool
     {
+        if (!$this->getDecorations()['single_line_compatible']) {
+            return false;
+        }
+
         if ($this->getForceVertical()) {
             return false;
         }

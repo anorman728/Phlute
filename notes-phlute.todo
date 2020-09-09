@@ -630,8 +630,90 @@ Things I want to come back to:
     * The "methods" element needs to be able to handle `<comment>` elements, which allows creating new comments between elements.
     * Which should use macros.
     * This is mostly inspired by wanting to keep having the "Helper functions below this line" comment after previous changes.
+    * I'm thinking this needs to be part of writePropertiesOrMethodsLoop.
+        * Which would actually strengthen the case for putting 'constants' in here, too, because it's a special case.
+        * Though, it's still not a *great* case, because there could easily be a use case for comments in the midst of both properties and functions.  There's no use case for putting constants in the midst of methods.
+    - InLineCommentBuilder
+        > Constructor just takes the FileWriter object, comment text, and the indentation level.
+        > write() will just write it out.
+        ! Wait-- New idea.
+            * To reduce code duplication, this *could* just be an option for DocblockBuilder.
+            * Oh, that actually works *really* well, I think.
+            * The only things that I'd need to change are the beginning of the returned value of buildDocblockLine, and there would be no open and close to the docblock.
+            * This way I wouldn't have to figure out how to abstract the line wrapping stuff that I've already done.
+        --Canceled in favor of new idea.
+    + inLine option for DocblockBuilder.
+        * if setInLineOption(true), then use '//' at beginning of each line instead of ' *'.
+        * But then there's also the single-line crap.
+            * Oh, that's easy to deal with-- isSingleLine returns false if lineComment is true.
+        * I'm also not going to bother making special cases for attributes.
+        * Dang-- This is causing more problems than I thought.  I have to give special treatment to initializeDoclock and finalizeDocblock.
+            * But I still think it's worth it this way, though.
+            * Though, I am wondering if there's a better way.  Maybe skip something in the `write` function.
+            * I'd just like to avoid checking if line comment in isSingleLine, initializeDocblock, finalizeDocblock, and buildDocblockLine.
+                * Though, buildDocblockLine is probably going to be calling another function that actually checks if line comment, but that's different.
+            * So, I've got *four* different places that need to check if it's a line comment.  How can I avoid this?
+                * One idea:
+                    * Don't pull constants directly.  Create a private variable that's an array with keys 'open_docblock', 'close_docblock', 'line_start'.
+                    * By default, those pull from the current constants.
+                    * setLineComment will then change those values.
+                        * Except now I'm thinking that I may want to change how that works, but I'll get to that in a minute.
+                    * If using a line comment, then open_docblock and close_docblock are empty strings, and line_start is '//'.
+                    * Now, initializeDocblock, finalizeDocblock, and buildDocblockLine should do *nothing* if their corresponding value is empty string (false).
+                * I feel like this idea is better, but not great.  It still requires some magic knowledge that a change to one means a change to another.
+                    * Well, not *that* much magic knowledge.
+                    * For the time being, I think I'm going to go with it.
+                * Okay, but how do I deal with the isSingleLine stuff?
+                    * I guess if the opening is empty string (falsey), then "singleLine" is not applicable.
+                        * Well, no, I don't like this, either.  I want something more explicit.
+            + Update isSingleLine
+                * Remove the new 'getLineComment', since it's irrelevant.
+            + Remove all lineComment stuff.
+                * The variable, the getter, the setter.
+            + Create array for 'decorations'.
+                * Hopefully I can think of a better name than that.
+                    * My thinking is that this is kind of like window decorations in desktop environments.
+                * I don't think I'm going to bother with getters and setters.
+                    * I take that back-- Since I'm using constants for the arrays anyway, I may as well.
+            + Reorganize constants.
+                * Going to use constant arrays now.
+                + DECORATIONS__DOC_BLOCK
+                    * Set as current.
+                    * Add value for 'singleLineCompatible', set to true.
+                + DECORATIONS__LINE_COMMENT
+                    * Set null for opening and closing, '//' for line start.
+                    * Set singleLineCompatible to false.
+            - Create private function for array
+                --Canceling this because I don't know what it means.  Hopefully I'll come back to it when it's needed.
+            + Create decoration setting public functions.
+                + useDocblockDecorations.
+                + useLineCommentDecorations.
+            + Call useDocblockDecorations in constructor.
+            + Update functions to use the $this->decorations property.
+                - Each of these needs to return if the corresponding property is empty string.
+                    * Wait-- Is that a good idea?  Maybe it should be null.
+                    * Because I can foresee this class possibly being used in the future for heredocs and nowdocs.  Those will have empty strings starting for each line.
+                    * Note: Heredocs and nowdocs are also a good reason why it's good to have separate property determining if a decoration is single-line compatible instead of checking if opening is empty string or null.  Those are never single-line compatible.
+                    --Canceled in favor of below.
+                ! Each of these needs to return if the corresponding property is null.
+                + initializeDocblock.
+                + finalizeDocblock.
+                + buildDocblockLine.
+                + singleLineDoc.
+            + Back to isSingleLine.
+                * If !singleLineCompatible, return false.
+    > Handle <comment> elements in ClassBuilder.
+        * New case in the switch in writePropertiesOrMethodsLoop.
+        * Going to be similar to superdocs, but I may want to abstract it to a separate function that's called from the switch.
+        ! Be sure to use getNodeText method.
+            * That's what uses the macros.
+    > Update README.
+        > Mention comment where/if appropriate.
+            * Reminder that it's going to be both in properties and methods.
+        > Mention that macros will apply.
 > 'throws" attribute for functions.
     * Will need to use usedNamespaces for this.
+    * Delimited by spaces.
 > Signature needs to be multiline if too long.
 > Pass by reference.
     * Reminder: Don't use & in XML.  It needs to be &amp;, and I probably don't want to do it that way, anyway.
@@ -665,6 +747,19 @@ Things I want to come back to:
     * Can use them up until now, but can't create them.
     * Will actually probably just want to make this basically a class object.  It's almost exactly the same thing.
 > Make interfaces.
+> PHPUnit tests features.
+    * Crap.  I just noticed this.
+    * PHPUnit has special docblock attributes, like 'covers' and "expectedException".
+    * 'covers' and 'expectedException' will both be examples of values that use namespaces.  But expectedExceptionMessage is an example of something that doesn't.
+    * I suppose I'll want to keep this generic.  Have like
+        @begin=xml@
+            <extra-docblock-attributes>
+                <attribute type="covers" namespaced="1">MyClass::MyMethod</attribute>
+                <!-- "namespaced" isn't good.  The idea is that it will fill in MyClass, but I don't like it. -->
+                <!-- I'm actually now thinking that it might be better not to do that at all, but instead just use macros for MyClass.  Don't handle it in the phlute code, just use a macro. -->
+                <attribute type="expectedExceptionMessage">Unexpected item in bagging area.</attribute>
+            </extra-docblock-attributes>
+        @end=xml@
 
 ! This is the point where I would call this project probably effectively done for 1.0.
     * Though at this point I'm not actually versioning.
