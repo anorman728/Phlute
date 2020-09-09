@@ -111,9 +111,13 @@ If a `property` element is an immediate child of the `properties` element, then 
 
 Constants will always appear before properties.  They naturally do not have getters and setters.  Their attributes are `name`, `type`, `doc`, and `value`, all of which are required (but may not actually cause an exception if missing).
 
+Comments can be placed in between properties, and will appear in results as line comments.  Macros will apply to these comments.
+
 ### methods
 
 The `methods` element has three child elements, all of which are optional: `public`, `protected`, and `private`.  The children of all three are the same, being `method` elements, but those groupings are defining the visibility, as you probably realize.
+
+Comments can be placed in between methods, and will appear in results as line comments.  Macros will apply to these comments.
 
 ### method
 

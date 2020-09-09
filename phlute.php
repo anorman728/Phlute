@@ -640,6 +640,7 @@ class ClassBuilder
         // Add the getters and setters.
         $this->getFileWriter()->appendToFile('');
         $this->getFileWriter()->appendToFile('// START getters and setters.', 1);
+        $this->getFileWriter()->appendToFile('');
 
         foreach ($propertiesArr as $property) {
             $property->writeSettersAndGetters();
@@ -647,6 +648,7 @@ class ClassBuilder
 
         $this->getFileWriter()->appendToFile('');
         $this->getFileWriter()->appendToFile('// END getters and setters.', 1);
+        $this->getFileWriter()->appendToFile('');
 
 
         // Add extra space after all is done.
@@ -724,13 +726,37 @@ class ClassBuilder
                         $childNode->nodeName
                     );
                     break;
+                case 'comment':
+                    $this->writeCommentNodeToFile($childNode);
+                    break;
                 default:
                     // Probably something dumb like "TextNode" or something
                     // meaningless from whitespace, so all we can do here is
                     // silently fail.
+                    // But this also means that unanticipated nodes will be
+                    // ignored.  This is used to our advantage for constants in
+                    // the properties element.
                     break;
             }
         }
+    }
+
+    /**
+     * Write line comment to file from comment element.
+     *
+     * @param   DOMNode     $el
+     * @return  void
+     */
+    private function writeCommentNodeToFile(DOMNode $el)
+    {
+        $docblock = new DocBlockBuilder(
+            $this->getFileWriter(), 1);
+        $docblock->setDescription(getNodeText($el));
+        $docblock->useLineCommentDecorations();
+        $docblock->write();
+
+        $this->getFileWriter()->appendToFile('');
+
     }
 
     /**
@@ -1842,11 +1868,11 @@ class MethodBuilder extends ElementBuilder
      */
     public function write()
     {
-        $this->getFileWriter()->appendToFile('');
-
         $this->writeDocblock();
 
         $this->writeFunction();
+
+        $this->getFileWriter()->appendToFile('');
 
     }
 

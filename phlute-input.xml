@@ -3,6 +3,7 @@
 <phlute default-output="./output">
     <macros><!-- Macros only apply to node content, not attributes, and *not* to CDATA content. -->
         <macro name="mymac">This is a macro.  This is "$1", the first argument, and this is "$2", the second argument.</macro>
+        <macro name="propmac">Comments in properties can be useful for separating large segments of properties into sections, like "These are the properties for handling shapes."</macro>
     </macros>
     <class name="MyClass" author="Andrew Norman" namespace="App\Lib" extends="ParentClass" implements="Metric Shape">
         <superdocs>
@@ -22,6 +23,8 @@
         </traits>
         <properties>
             <property type="int" name="count" default="1" doc="The count."/>
+            <comment>This is a comment in the properties.</comment>
+            <comment>{{propmac}}</comment>
             <property type="string" setter="0" name="name" doc="The name of the object."/>
             <public>
                 <property type="string" name="height" default="5'6\&quot;" doc="This should be public." setter="0" getter="0"/>
@@ -33,6 +36,7 @@
                     <doc>The constructor.</doc>
                     <input type="string" name="name" desc='The name'/>
                 </method>
+                <comment>This is a comment.</comment>
                 <method return="int" name="increment">
                     <doc>Increment the count</doc>
                     <content><![CDATA[<?
@@ -67,6 +71,7 @@
         <doc>Subspace.  {{mymac first second}} That was a macro in action.</doc>
         <properties>
             <property name="myProp" type="int" doc="My Property" default="10"/>
+            <comment>Constants will always appear first, including before comments.</comment>
             <constant name="MY_CONST" type="string" doc="This is a constant." value="testing123"/>
         </properties>
         <methods>

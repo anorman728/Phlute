@@ -626,7 +626,7 @@ Things I want to come back to:
                     * Okay, nevermind, not quite that.
                 * Well, I guess I'll call it good for now.
     + Update README.
-> Comments between methods.
++ Comments between methods.
     * The "methods" element needs to be able to handle `<comment>` elements, which allows creating new comments between elements.
     * Which should use macros.
     * This is mostly inspired by wanting to keep having the "Helper functions below this line" comment after previous changes.
@@ -702,19 +702,34 @@ Things I want to come back to:
                 + singleLineDoc.
             + Back to isSingleLine.
                 * If !singleLineCompatible, return false.
-    > Handle <comment> elements in ClassBuilder.
+    + Handle <comment> elements in ClassBuilder.
         * New case in the switch in writePropertiesOrMethodsLoop.
         * Going to be similar to superdocs, but I may want to abstract it to a separate function that's called from the switch.
         ! Be sure to use getNodeText method.
             * That's what uses the macros.
-    > Update README.
-        > Mention comment where/if appropriate.
+        + Make function that takes in DOMNode object and writes comments to file.
+            * This is where I'll want to use the getNodeText function.
+            * And it's going to need to be line comment.
+        + Call this function from writePropetiesOrMethodsLoop in the switch, for case 'comment'.
+    + Update README.
+        + Mention comment where/if appropriate.
             * Reminder that it's going to be both in properties and methods.
-        > Mention that macros will apply.
+        + Mention that macros will apply.
+> Consider refactoring ClassBuilder.
+    * It's getting to be pretty large.  I'm not 100% sure it's warranted or what can be done, but I want to at least take a look at it.
+    * It's almost 600 lines at this point.
+- Empty line option in properties and methods.
+    * I think.  I think it could be useful.
+    * Maybe just <br/>, then put that in the switch in writePropertiesOrMethodsLoop.
+    * On the other hand, I think this kinda goes against the whole idea of focusing on the logic instead of the code.
+        * The whole point of this project is to be able to use XML to focus on logic instead of code.  This is basically adding some of the same mundanity of writing code into writing the xml.
+    --So, no, this isn't a good idea.  If I want to have extra spaces somewhere, I need to find another solution.
 > 'throws" attribute for functions.
     * Will need to use usedNamespaces for this.
     * Delimited by spaces.
 > Signature needs to be multiline if too long.
+    * The 81 constant for docblock needs to be abstracted somewhere.
+        * Probably as a CommonConstants class.
 > Pass by reference.
     * Reminder: Don't use & in XML.  It needs to be &amp;, and I probably don't want to do it that way, anyway.
     * My current thinking is `passby="ref"`.  Default value of `passby` would be `"val"`.
@@ -737,7 +752,7 @@ Things I want to come back to:
     * I want to be able to pass a filter that matches class names, so only class names are built that match that pattern.
 > Delete files
     * Need an option to pass from CLI to delete all files that would otherwise be written.
-> No space before functions.
++ No space before functions.
     * I did this as an easy way to prevent space at end of last function, but it's actually causing other problems.
     * If there are no use statements or variables or what-have-you, if the first thing in a class is a function, then there's an unwanted space.
     * I'm going to have to figure out another way to fix that last space.
@@ -760,6 +775,9 @@ Things I want to come back to:
                 <attribute type="expectedExceptionMessage">Unexpected item in bagging area.</attribute>
             </extra-docblock-attributes>
         @end=xml@
+> Space at the end of last method.
+    * This was something that I originally fixed in a stupid way, by putting a space before the function.
+    * I'm not sure yet how to fix it, but I probably should.
 
 ! This is the point where I would call this project probably effectively done for 1.0.
     * Though at this point I'm not actually versioning.
