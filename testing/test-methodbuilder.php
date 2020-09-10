@@ -23,9 +23,13 @@ $xml = <<<'__XML'
     <method name="myfunction" return="string">
         <doc>This is a function.</doc>
         <input type="string|int" name="myvariable" desc="This is a variable."/>
-        <input type="bool" name="model" desc="Model"/>
+        <input type="bool" name="model">
+            <desc>A model for your enjoyment.</desc>
+        </input>
         <throws exception="Exception" desc="If database connection fails."/>
-        <throws exception="InvalidArgumentException" desc="If less than zero."/>
+        <throws exception="InvalidArgumentException" desc="If less than four.">
+            <desc>If less than five.</desc>
+        </throws>
         <content><![CDATA[<?
             $this->setArray([
                 1,

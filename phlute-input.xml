@@ -4,6 +4,7 @@
     <macros><!-- Macros only apply to node content, not attributes, and *not* to CDATA content. -->
         <macro name="mymac">This is a macro.  This is "$1", the first argument, and this is "$2", the second argument.</macro>
         <macro name="propmac">Comments in properties can be useful for separating large segments of properties into sections, like "These are the properties for handling shapes."</macro>
+        <macro name="input-desc">this macro is used in an input description for $1.</macro>
     </macros>
     <class name="MyClass" author="Andrew Norman" namespace="App\Lib" extends="ParentClass" implements="Metric Shape">
         <superdocs>
@@ -85,6 +86,12 @@
                     </doc>
                 </method>
             </protected>
+            <method return="string" name="myfunc01">
+                <doc>My function 01.</doc>
+                <input type="string" name="strInput">
+                    <desc>Hello, {{input-desc "My function 01"}}</desc>
+                </input>
+            </method>
         </methods>
     </class>
 </phlute>

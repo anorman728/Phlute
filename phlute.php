@@ -1898,11 +1898,11 @@ class MethodBuilder extends ElementBuilder
             $type = $this->buildFullyQualifiedClassOrType(
                 $input->getAttribute('type'));
 
-            $dets = [$type, '$' . $input->getAttribute('name')];
-
-            if (strlen($input->getAttribute('desc')) > 0) {
-                $dets[] = $input->getAttribute('desc');
-            }
+            $dets = [
+                $type,
+                '$' . $input->getAttribute('name'),
+                childOverAttribute($input, 'desc')
+            ];
 
             $docblock->addAttribute('param', $dets);
         }
@@ -1915,10 +1915,13 @@ class MethodBuilder extends ElementBuilder
 
         // Throws lines.
         foreach ($this->getImmediateChildrenByName('throws') as $input) {
+            $exceptionClass = $this->buildFullyQualifiedClassOrType(
+                $input->getAttribute('exception'));
+
             $docblock->addAttribute('throws', [
-                $input->getAttribute('exception'),
+                $exceptionClass,
                 null,
-                $input->getAttribute('desc')
+                childOverAttribute($input, 'desc'),
             ]);
         }
 
@@ -2684,6 +2687,25 @@ function addPseudoTab(string $input): string
 function getNodeText(DOMNode $node): string
 {
     return MacroProcessor::process($node->nodeValue);
+}
+
+/**
+ * Look for a child element of a particular name and return its text value.  If
+ * it doesn't exist, return the value of the attribute of the name.
+ *
+ * @param   DOMNode     $el
+ * @param   string      $name
+ * @return  string
+ */
+function childOverAttribute(DOMNode $el, string $name): string
+{
+    $child = getFirstImmediateChildByName($el, $name);
+
+    if (is_null($child)) {
+        return $el->getAttribute($name);
+    }
+
+    return getNodeText($child);
 }
 
 

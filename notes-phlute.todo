@@ -737,9 +737,25 @@ Things I want to come back to:
         * But I have another idea-- I was already planning to make docs for properties and constants and descs for inputs be child elements *later*.  I think I'll make this `desc` attribute for now, and update this at the same time that I do inputs.
         * So, for the time being, do *not* use node text, because I want it to be updated at the same time.
         * But I may want to up that feature in priority.
-> Desc for inputs and throwses needs to be child elements so they can be longer.
++ Desc for inputs and throwses needs to be child elements so they can be longer.
     * And use macros.
-    * Yes, it's "throwses".
+    * Yes, it's "throwses", because it's a singular `throws` element.
+    * But it needs to be an *option* for child element.
+    + getDesc function.
+        * I think this needs to be a disembodied function.  (Meaning not part of a class.)
+            * Because it's going to be reused for the `doc` elements in next item.
+        * It's also going to need the child element name that it's looking for be an argument.
+            * For the same reason.
+        * Also probably don't want to name it getDesc, now that I think of it.
+            * Because it's goin to be `desc` for this, but `doc` for the next part.
+            * The whole idea is to use a child element's text if available, but then use attribute if it's not.
+            * So, something like "favorChild".
+                * "favoriteChild" would be a funny name for a function, but I'd rather it be clearer than that.  Especially since that makes it sound more like it means something completely different in terms of functionality.
+            * "childOverAttribute" is best I can come up with, and I hate it.
+    + inputs
+    + throwses
+    + README
+        * I don't think I updated the README for the previous change.
 > Doc for property *and* constants need to be allowed to be child elements so they can be longer.
     * And use macros.
 ! Note: 'doc' is the attribute if it's the docblock description.  'desc' is the attribute if it's the description of a docblock attribute.

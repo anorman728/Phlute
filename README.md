@@ -131,7 +131,7 @@ The child elements of a method element are `doc`, `input`, and `content`.
 
 `doc` is required for any method element, but it's the only required child element.
 
-You can have as few or as many `input` elements as you like.  Its attributes are `type`, `name`, and `desc`, all of which are required.
+You can have as few or as many `input` elements as you like.  Its attributes are `type`, `name`, and `desc`.  `type` and `name` are required, but `desc` is optional.  `desc` can also be defined as a child element instead of an attribute, in which case macros can be used.
 
 The `content` element is optional and contains PHP within CDATA tags.  (This is similar to how an RSS feed would contain HTML within CDATA tags.)  (This is also why there's a modeline towards the beginning of the example file-- I modified the xml syntax highlighter for Vim to highlight the inside of CDATA as PHP.
 
@@ -139,4 +139,4 @@ The `content` element is optional and contains PHP within CDATA tags.  (This is 
 
 Visibility for methods works exactly like properties-- It defaults to private, but can be made public or protected by making them children of a `public` or `protected` element.  (For methods, I generally like to use that for all of them.)
 
-The `throws` attribute can be used to define `@throws` tags in the resulting docblock.  Multiple exceptions be defined here, delimited by spaces.  The full namespace of the exception will be used in the output, assuming that it's defined in the `uses` element.
+The `throws` child elements can be used to define `@throws` tags in the resulting docblock.  Multiple exceptions be defined here.  The full namespace of the exception will be used in the output, assuming that it's defined in the `uses` element.  The description of `throws` can be either an attribute or a child element.  If it's a child element, it can use macros.
