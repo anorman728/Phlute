@@ -53,7 +53,8 @@
                 </method>
             </public>
             <private>
-                <method return="void" name="secretfunction" throws="InvalidArgumentException">
+                <method return="void" name="secretfunction">
+                    <throws exception="InvalidArgumentException" desc="If Q is less than zero."/>
                     <doc>Not an accessible function.</doc>
                 </method>
             </private>

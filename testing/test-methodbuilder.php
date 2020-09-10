@@ -20,10 +20,12 @@ $xml = <<<'__XML'
         <use value="App\Model\MyModel"/>
         <use value="App\View\MyView"/>
     </uses>
-    <method name="myfunction" return="string" throws="Exception InvalidArgumentException">
+    <method name="myfunction" return="string">
         <doc>This is a function.</doc>
         <input type="string|int" name="myvariable" desc="This is a variable."/>
         <input type="bool" name="model" desc="Model"/>
+        <throws exception="Exception" desc="If database connection fails."/>
+        <throws exception="InvalidArgumentException" desc="If less than zero."/>
         <content><![CDATA[<?
             $this->setArray([
                 1,

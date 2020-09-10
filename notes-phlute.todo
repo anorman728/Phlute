@@ -730,6 +730,19 @@ Things I want to come back to:
 + 'throws" attribute for functions.
     * Will need to use usedNamespaces for this.
     * Delimited by spaces.
++ Well, crud, I just realized that there probably needs to be a document for 'throws', like `@throws InvalidArgumentException   If less than zero.`.
+    * In which case I don't want attributes-- I want it to be treated similarly to inputs.
+    * So, I'll do this next.
+    * Okay-- I originally decided to make this the text of the `throws` element, but I'm realizing now that a more future-proof version of this is to make a child element of `desc`.
+        * But I have another idea-- I was already planning to make docs for properties and constants and descs for inputs be child elements *later*.  I think I'll make this `desc` attribute for now, and update this at the same time that I do inputs.
+        * So, for the time being, do *not* use node text, because I want it to be updated at the same time.
+        * But I may want to up that feature in priority.
+> Desc for inputs and throwses needs to be child elements so they can be longer.
+    * And use macros.
+    * Yes, it's "throwses".
+> Doc for property *and* constants need to be allowed to be child elements so they can be longer.
+    * And use macros.
+! Note: 'doc' is the attribute if it's the docblock description.  'desc' is the attribute if it's the description of a docblock attribute.
 > Signature needs to be multiline if too long.
     * The 81 constant for docblock needs to be abstracted somewhere.
         * Probably as a CommonConstants class.
@@ -740,6 +753,7 @@ Things I want to come back to:
     * Since the whole point of setters and getters is to make them more versatile for doing other things.
     * I'll need to do use CDATA.  Very similar to methods, but still definitely different.
     * I'm actually thinking now that this should just be a method, with the exact same elements as those in the `methods` tag.
+        * I think I can just pass a `getter` and `setter` element to the MethodBuilder class.  To my memory, it never checks that the element passed to it is actually a 
 > Property doc attribute needs to optionally be a doc child element.
 > nullable properties
     * Basically just means type attribute will start with '?' in input and replaced by <type>|null in docblock.
@@ -795,4 +809,3 @@ Things I want to come back to:
     > Allow literal {{ in source.
 > Allow value as child CDATA element for constants.
     * Mostly to let me define big arrays as constants.
-> Doc for property *and* constants need to be allowed to be child elements so they can be longer.
