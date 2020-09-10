@@ -756,8 +756,19 @@ Things I want to come back to:
     + throwses
     + README
         * I don't think I updated the README for the previous change.
-> Doc for property *and* constants need to be allowed to be child elements so they can be longer.
++ Doc for property *and* constants need to be allowed to be child elements so they can be longer.
     * And use macros.
+    * And I guess doc child element for methods and classes need to be possible.  But I don't think I'm going to document it that way.
+        * Well, I guess I may as well document it that way.  In fact, I'm going to document "doc" completely separately in general.
+    + Change for classes.
+    + Change for methods.
+    + Change for properties.
+    + Change for constants.
+    + README update.
+        + Section on docs and descs.
+        - Reference the new section in classes, methods, properties, and constants.
+        - Reference in inputs and throws.
+        --Not adding references from other sections after all.
 ! Note: 'doc' is the attribute if it's the docblock description.  'desc' is the attribute if it's the description of a docblock attribute.
 > Signature needs to be multiline if too long.
     * The 81 constant for docblock needs to be abstracted somewhere.

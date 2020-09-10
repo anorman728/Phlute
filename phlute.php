@@ -523,9 +523,9 @@ class ClassBuilder
         $docBuilder->setForceVertical(true);
 
         // Description.
-        $docBuilder->setDescription(getNodeText(
-            getFirstImmediateChildByName($this->getClassNode(), 'doc')
-        ));
+        $docBuilder->setDescription(
+            childOverAttribute($this->getClassNode(), 'doc')
+        );
 
         // Author, if applicable.
         $author = $this->getClassNode()->getAttribute('author');
@@ -1665,7 +1665,7 @@ class PropertyBuilder extends ElementBuilder
     public function write()
     {
         $docblock = new DocBlockBuilder($this->getFileWriter(), $this->getIndentlvl());
-        $docblock->setDescription($this->getAttribute('doc'));
+        $docblock->setDescription(childOverAttribute($this->getElementNode(), 'doc'));
         $docblock->addAttribute('var', [
             $this->getUsedNamespaces()->fullyQualifiedName(
                 $this->getAttribute('type')
@@ -1733,9 +1733,7 @@ class PropertyBuilder extends ElementBuilder
         $el->setAttribute('return', $this->getAttribute('type'));
         $el->setAttribute('name', 'get' . ucfirst($name));
         $el->setAttribute('keywords', ($this->isStatic() ? 'static' : ''));
-
-        $doc = $domDum->createElement('doc', "Getter for $name.");
-        $el->appendChild($doc);
+        $el->setAttribute('doc', "Getter for $name.");
 
         $contentContainer = $domDum->createElement('content');
         $content = $domDum->createCDATASection('return $this->' . $name . ';');
@@ -1772,9 +1770,7 @@ class PropertyBuilder extends ElementBuilder
         $el->setAttribute('return', 'void');
         $el->setAttribute('name', 'set' . ucfirst($name));
         $el->setAttribute('keywords', ($this->isStatic() ? 'static' : ''));
-
-        $doc = $domDum->createElement('doc', "Setter for $name.");
-        $el->appendChild($doc);
+        $el->setAttribute('doc', "Setter for $name.");
 
         $input = $domDum->createElement('input');
         $input->setAttribute('type', $this->getAttribute('type'));
@@ -1824,7 +1820,7 @@ class ConstantBuilder extends ElementBuilder
     public function write()
     {
         $docblock = new DocBlockBuilder($this->getFileWriter(), $this->getIndentlvl());
-        $docblock->setDescription($this->getAttribute('doc'));
+        $docblock->setDescription(childOverAttribute($this->getElementNode(), 'doc'));
         $docblock->addAttribute('var', [$this->getAttribute('type')]);
         $docblock->write();
 
@@ -1890,7 +1886,7 @@ class MethodBuilder extends ElementBuilder
         $docblock = new DocBlockBuilder(
             $this->getFileWriter(), $this->getIndentlvl());
         $docblock->setDescription(
-            getNodeText($this->getImmediateChildrenByName('doc')[0]));
+            childOverAttribute($this->getElementNode(), 'doc'));
         $docblock->setForceVertical(true);
 
         // Input lines.
