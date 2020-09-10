@@ -138,3 +138,5 @@ The `content` element is optional and contains PHP within CDATA tags.  (This is 
 `<?`, `<?php`, and `?>` at the beginning and end of the CDATA content is ignored.  Everything within this is dumped into the file contents in the output.  If there is no `content` tag, then the content of the function just contains a `// Todo.` comment.
 
 Visibility for methods works exactly like properties-- It defaults to private, but can be made public or protected by making them children of a `public` or `protected` element.  (For methods, I generally like to use that for all of them.)
+
+The `throws` attribute can be used to define `@throws` tags in the resulting docblock.  Multiple exceptions be defined here, delimited by spaces.  The full namespace of the exception will be used in the output, assuming that it's defined in the `uses` element.

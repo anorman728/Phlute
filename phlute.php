@@ -1913,6 +1913,19 @@ class MethodBuilder extends ElementBuilder
 
         $docblock->addAttribute('return', [$returnVal]);
 
+        // Throws lines.
+        foreach (explode(' ', $this->getAttribute('throws')) as $exception) {
+            if (strlen($exception) == 0) {
+                // This can happen if there's no throws attribute at all, so
+                // just ignore it.
+                continue;
+            }
+
+            $docblock->addAttribute('throws', [
+                $this->buildFullyQualifiedClassOrType($exception)
+            ]);
+        }
+
         // Write.
         $docblock->write();
 

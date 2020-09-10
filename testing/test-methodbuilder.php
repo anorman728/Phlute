@@ -20,7 +20,7 @@ $xml = <<<'__XML'
         <use value="App\Model\MyModel"/>
         <use value="App\View\MyView"/>
     </uses>
-    <method name="myfunction" return="string">
+    <method name="myfunction" return="string" throws="Exception InvalidArgumentException">
         <doc>This is a function.</doc>
         <input type="string|int" name="myvariable" desc="This is a variable."/>
         <input type="bool" name="model" desc="Model"/>

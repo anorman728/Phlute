@@ -715,16 +715,19 @@ Things I want to come back to:
         + Mention comment where/if appropriate.
             * Reminder that it's going to be both in properties and methods.
         + Mention that macros will apply.
-> Consider refactoring ClassBuilder.
++ Consider refactoring ClassBuilder.
     * It's getting to be pretty large.  I'm not 100% sure it's warranted or what can be done, but I want to at least take a look at it.
     * It's almost 600 lines at this point.
+    * I can't really think of anything to abstract at the moment, though.
+    * Maybe I'll do this later.  I can't quite think of anything that can be abstracted well.
+        * Maybe the methods and properties, since they both use writePropertiesOrMethodsLoop.
 - Empty line option in properties and methods.
     * I think.  I think it could be useful.
     * Maybe just <br/>, then put that in the switch in writePropertiesOrMethodsLoop.
     * On the other hand, I think this kinda goes against the whole idea of focusing on the logic instead of the code.
         * The whole point of this project is to be able to use XML to focus on logic instead of code.  This is basically adding some of the same mundanity of writing code into writing the xml.
     --So, no, this isn't a good idea.  If I want to have extra spaces somewhere, I need to find another solution.
-> 'throws" attribute for functions.
++ 'throws" attribute for functions.
     * Will need to use usedNamespaces for this.
     * Delimited by spaces.
 > Signature needs to be multiline if too long.
@@ -735,6 +738,8 @@ Things I want to come back to:
     * My current thinking is `passby="ref"`.  Default value of `passby` would be `"val"`.
 > Custom setters and getters.
     * Since the whole point of setters and getters is to make them more versatile for doing other things.
+    * I'll need to do use CDATA.  Very similar to methods, but still definitely different.
+    * I'm actually thinking now that this should just be a method, with the exact same elements as those in the `methods` tag.
 > Property doc attribute needs to optionally be a doc child element.
 > nullable properties
     * Basically just means type attribute will start with '?' in input and replaced by <type>|null in docblock.

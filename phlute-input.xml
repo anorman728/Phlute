@@ -53,7 +53,7 @@
                 </method>
             </public>
             <private>
-                <method return="void" name="secretfunction">
+                <method return="void" name="secretfunction" throws="InvalidArgumentException">
                     <doc>Not an accessible function.</doc>
                 </method>
             </private>
