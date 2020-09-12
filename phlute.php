@@ -796,6 +796,9 @@ class FileWriter
     /** @var string File path. */
     private $filepath;
 
+    /** @var string|null The next line to actually be written to disk. */
+    private $bufferline = null;
+
     /**
      * Setter for filepath.
      *
@@ -833,7 +836,23 @@ class FileWriter
     }
 
     /**
+     * Destructor.
+     *
+     * @return  void
+     */
+    public function __destruct()
+    {
+        $this->popAndWrite('//END');
+        // If we ever *see* "//END", then we know something's wrong, because it
+        // should go into the buffer and just be discarded.
+    }
+
+    /**
      * Append a line to the output file.
+     *
+     * (Note: From an inner-workings perspective, it doesn't actually write the
+     * line to disk until the *next* time the method is called, or during the
+     * destructor.)
      *
      * @param   string  $content
      * @param   int     $indentlvl      Defaults to 0.
@@ -841,14 +860,84 @@ class FileWriter
      */
     public function appendToFile(string $content, int $indentlvl = 0)
     {
-        $lineContent = strlen($content) > 0
-            ? (buildIndent($indentlvl) . $content)
-            : ''
-        ;
+        $this->popAndWrite(buildIndent($indentlvl) . $content);
+    }
+
+    /**
+     * Append string to the last line.
+     *
+     * @param   string  $content
+     * @return  void
+     */
+    public function appendToLine(string $content)
+    {
+        $this->bufferline.= $content;
+    }
+
+    /**
+     * Delete the last line.
+     *
+     * (Note: From an inner-workings perspective, it doesn't delete anything
+     * from disk, but just sets the buffer to null, so it won't be written to
+     * disk.  This function is actually why there's a buffer in the first
+     * place.)
+     *
+     * @return  void
+     */
+    public function deleteLastLine()
+    {
+        $this->bufferline = null;
+    }
+
+
+    // Helper functions below this line.
+
+    /**
+     * Pop a buffer with new content and write the result to file.
+     *
+     * @param   string  $newcontent
+     * @return  void
+     */
+    private function popAndWrite(string $newcontent)
+    {
+        $bufferline = $this->popBuffer($newcontent);
+
+        if (is_string($bufferline)) {
+            // The alternative is null-- Don't write to file if there's nothing
+            // in the buffer.  But *do* write empty lines to the buffer, which
+            // is why we're not just checking !$bufferline.
+            $this->writeLineToDisk($bufferline);
+        }
+    }
+
+    /**
+     * Replace buffer with new value and return the old value.
+     *
+     * @param   string          $newvalue
+     * @return  string|null
+     */
+    public function popBuffer(string $newvalue)
+    {
+        $returnval = $this->bufferline;
+        $this->bufferline = $newvalue;
+        return $returnval;
+    }
+
+    /**
+     * Write a line to disk.
+     *
+     * @param   string  $lineContent
+     * @return  void
+     */
+    public function writeLineToDisk(string $lineContent)
+    {
+        $lineContent = rtrim($lineContent);
+
+        $lb = file_exists($this->getFilePath()) ? "\n" : '';
 
         file_put_contents(
             $this->getFilePath(),
-            $lineContent . "\n",
+            $lb . $lineContent,
             FILE_APPEND
         );
     }

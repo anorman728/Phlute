@@ -770,9 +770,73 @@ Things I want to come back to:
         - Reference in inputs and throws.
         --Not adding references from other sections after all.
 ! Note: 'doc' is the attribute if it's the docblock description.  'desc' is the attribute if it's the description of a docblock attribute.
+    * I've added that to the README.
 > Signature needs to be multiline if too long.
     * The 81 constant for docblock needs to be abstracted somewhere.
         * Probably as a CommonConstants class.
+    + Create CommonConstants class and abstract LENGTH_LESS_THAN constant.
+    > Make signature multiline if it's longer than LENGTH_LESS_THAN.
+        * This is going to involve the writeFunction_Signature method.
+        * I'm not quite sure how yet.
+        * I kinda hate to say it, but I think I may need to abstract everything after line 12 to a separate function.
+            * The reason why I don't like the idea of that is because it's five different parameters.
+        * I'm not sure how, though.  Maybe not everything.
+        * Now that I think of it, though, it's technically only the arguments array and the opening "{" that needs to be updated.
+            * In particular, right now it's the arguments that I need to worry about.
+            * If it's too long, I'll need to add some line breaks and spaces to each argument.
+            * Which just means it'll be a different "implode" command.
+        * Well, that almost worked.
+            * But it's not "implode", actually.
+        * Okay, I've got it, but I'm not sure of a clean way to deal with that opening bracket.
+            * I have an idea, though it's kind of weird-- put it into buildSignature.
+                * Okay, no, nevermind.  That would make it a whole lot longer.
+            * This is actually reminding me of the upcoming problem I'm going to have with the "last line" issue, where I have a blank line after the functions.
+                * I'm going to see if there's a way to remove a line from a file.  Might be a stupid idea, but it would make at least the second one a whole lot easier to deal with.
+                    * There's not, and that's not actually that surprising.
+            * I may need to have something more dynamic.
+                * In terms of when to add new lines.
+                * Like, maybe FileWriter needs to keep the last line in a buffer.
+                    * Then don't add a new line before each function.
+                        * (Will apply to more than functions.)
+                    * But sometimes will need an "added space" function, like for the first line of a function.
+                * Oh, actually, I have a slightly better idea, I think.
+                    * Last line, don't write it to file.  Only write the most recent line to file when another one's put into the buffer.
+                    * Then, have the following new options:
+                        * Append to line in buffer.
+                        * Push through queue (adding a new line to the buffer and pushing the current buffer into the file).
+                        * Clear line buffer, meaning whatever's currently in there is lost forever.
+                    * And if that line is not null on destruct, then write it to file.
+        + Stash changes to writing signature.
+        + Refactor FileWriter.
+            + Create $bufferline.
+                * Null by default.
+            + Redo appendToFile.
+                * Set $nextline = $this->bufferline.
+                * Set $this->bufferline = $content.
+                ! Don't forget handling indents!
+                    * This is going to be difficult with spaces.
+                    * I think I'm going to always put spaces in the buffer line, and in the writeLineToDisk function, if it's just empty space, then write empty line.
+                * Continue as is, but with $nextline instead of $content.
+                * *Start* new line with line break instead of ending it with one.
+                    * But not the first time the function is run.
+            + Add __destruct.
+                * If $nextline is not null, write it to file.
+                    * Using the function that's used by appendToFile.
+                    * Which means I'll probably want to abstract the last part of it.
+            + Add appendToLine.
+                * Public function that appends to $this->bufferline.
+            + Add deleteLastLine.
+                * Doesn't delete from file, of course.  Just sets $this->bufferline to null.
+            --Though I'm impressed by my own cleverness, this turned out to be a stupid way of doing it.
+                --Cancel the cancelling-- The other idea fixed one problem, but not both.  It wouldn't allow for "deleting" the last line.
+        - Refactor FileWriter (new idea)
+            > appendToFile needs to have newline at beginning of line content, not end.
+                * But there's no new line if it's the first time it's run, i.e., if there currently is no file.
+            ? Wait-- This can't be used to delete lines.
+            --Okay, back to the previous idea.
+        > Commit.
+        > Unstash changes to writing signature.
+        >>Fill in blanks here-- Need to append to line or something.
 > Pass by reference.
     * Reminder: Don't use & in XML.  It needs to be &amp;, and I probably don't want to do it that way, anyway.
     * My current thinking is `passby="ref"`.  Default value of `passby` would be `"val"`.
@@ -781,11 +845,16 @@ Things I want to come back to:
     * I'll need to do use CDATA.  Very similar to methods, but still definitely different.
     * I'm actually thinking now that this should just be a method, with the exact same elements as those in the `methods` tag.
         * I think I can just pass a `getter` and `setter` element to the MethodBuilder class.  To my memory, it never checks that the element passed to it is actually a 
-> Property doc attribute needs to optionally be a doc child element.
-> nullable properties
+- Property doc attribute needs to optionally be a doc child element.
+    --Already did this.
+- nullable properties
     * Basically just means type attribute will start with '?' in input and replaced by <type>|null in docblock.
-> Variant return types.
+    --Already done.
+- Variant return types.
     * If return type of property is variant or contains a '|', then don't enforce a type.
+    ? Wait, didn't I already do this?
+        * Yes, I did.
+    --Already done.
 - Namespaced docblock types.
     * If input or return type matches one of the 'use' statements, handle accordingly.
     * i.e., in docblocks it needs to be fully-qualified, but in signatures it shouldn't be.
