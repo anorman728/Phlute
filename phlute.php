@@ -997,10 +997,6 @@ class DocblockBuilder
     ];
 
 
-    /** @var int The upper bound, exclusive, of the line length. */
-    const LENGTH_LESS_THAN = 81;
-
-
     // START getters and setters.
 
     /**
@@ -1329,7 +1325,7 @@ class DocblockBuilder
             while (strlen($paragraph) > 0) {
                 $paragraph = $this->buildDocblockLine($indent . $paragraph);
 
-                if(strlen($paragraph) <= static::LENGTH_LESS_THAN) {
+                if(strlen($paragraph) < CommonConstants::LENGTH_LESS_THAN) {
                     $outputDum = $paragraph;
                     $paragraph = '';
                 } else {
@@ -1459,7 +1455,7 @@ class DocblockBuilder
             return false;
         }
 
-        if (strlen($this->singleLineDoc()) >= static::LENGTH_LESS_THAN) {
+        if (strlen($this->singleLineDoc()) >= CommonConstants::LENGTH_LESS_THAN) {
             return false;
         }
 
@@ -1947,6 +1943,9 @@ class MethodBuilder extends ElementBuilder
 {
     use VisibilityTrait;
 
+    /** @var bool True if using a vertical signature. */
+    private $verticalSig = false;
+
     /**
      * {@inheritDoc}
      *
@@ -2029,7 +2028,11 @@ class MethodBuilder extends ElementBuilder
             return;
         }
 
-        $this->getFileWriter()->appendToFile('{', $this->getIndentlvl());
+        if ($this->verticalSig) {
+            $this->getFileWriter()->appendToLine(' {');
+        } else {
+            $this->getFileWriter()->appendToFile('{', $this->getIndentlvl());
+        }
 
         $this->writeFunction_Content();
 
@@ -2043,7 +2046,7 @@ class MethodBuilder extends ElementBuilder
      */
     private function writeFunction_Signature()
     {
-        $vis = $this->getVisibility();
+        $vis  = $this->getVisibility();
         $stat = $this->isStatic() ? ' static' : '';
         $name = $this->getAttribute('name');
         $args = implode(', ', $this->buildArgumentsArray());
@@ -2055,10 +2058,16 @@ class MethodBuilder extends ElementBuilder
             : ''
         ;
 
-        $declaration = "{$vis}{$stat} function $name($args)$returnType";
+        $declaration
+            = $this->buildSignature($vis, $stat, $name, $args, $returnType);
 
-        if ($this->isAbstract()) {
-            $declaration = "abstract $declaration;";
+        $decLength = strlen($declaration)
+            + $this->getIndentLvl() * CommonConstants::INDENT_WIDTH;
+
+        if ($decLength >= CommonConstants::LENGTH_LESS_THAN) {
+            // Too long, then retry.
+            $declaration = $this->buildVerticalSignature($vis, $stat, $name, $returnType);
+            $this->verticalSig = true;
         }
 
         $this->getFileWriter()->appendToFile($declaration, $this->getIndentlvl());
@@ -2109,6 +2118,68 @@ class MethodBuilder extends ElementBuilder
         }
 
         return true;
+    }
+
+    /**
+     * Put together the various stuff to make the signature.
+     *
+     * @param   string  $vis
+     *  Visibility.
+     * @param   string  $stat
+     *  Static, or empty string.
+     * @param   string  $name
+     *  Method name.
+     * @param   string  $args
+     *  Arguments.
+     * @param   string  $returnType
+     *  Return type.
+     * @return  string
+     */
+    private function buildSignature(
+        string $vis,
+        string $stat,
+        string $name,
+        string $args,
+        string $returnType
+    ): string {
+        $declaration = "{$vis}{$stat} function $name($args)$returnType";
+
+        if ($this->isAbstract()) {
+            $declaration = "abstract $declaration;";
+        }
+
+        return $declaration;
+    }
+
+    /**
+     * Build vertical signature, i.e., put the arguments on separate lines.
+     *
+     * @param   string  $vis
+     *  Visibility.
+     * @param   string  $stat
+     *  Static, or empty string.
+     * @param   string  $name
+     *  Method name.
+     * @param   string  $returnType
+     *  Return type.
+     * @return  string
+     */
+    private function buildVerticalSignature(
+        string $vis,
+        string $stat,
+        string $name,
+        string $returnType
+    ): string {
+        $argsArr = [];
+
+        foreach ($this->buildArgumentsArray() as $arg) {
+            $argsArr[] = "\n" . buildIndent($this->getIndentlvl() + 1) . $arg;
+        }
+
+        $args = implode(',', $argsArr);
+        $args.= "\n" . buildIndent($this->getIndentlvl());
+
+        return $this->buildSignature($vis, $stat, $name, $args, $returnType);
     }
 
     /**
@@ -2672,6 +2743,20 @@ class UsedNamespaces
 
 }
 
+/**
+ * Common constants used among multiple classes.
+ *
+ * @author  Andrew Norman
+ */
+class CommonConstants
+{
+    /** @var int The upper bound, exclusive, of the line length. */
+    const LENGTH_LESS_THAN = 81;
+
+    /** @var int Width of indents. */
+    const INDENT_WIDTH = 4;
+}
+
 
 // Shared functions below.
 
@@ -2683,7 +2768,7 @@ class UsedNamespaces
  */
 function buildIndent(int $indentlvl): string
 {
-    return str_repeat(' ', 4 * $indentlvl);
+    return str_repeat(' ', CommonConstants::INDENT_WIDTH * $indentlvl);
 }
 
 /**

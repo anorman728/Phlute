@@ -775,7 +775,7 @@ Things I want to come back to:
     * The 81 constant for docblock needs to be abstracted somewhere.
         * Probably as a CommonConstants class.
     + Create CommonConstants class and abstract LENGTH_LESS_THAN constant.
-    > Make signature multiline if it's longer than LENGTH_LESS_THAN.
+    + Make signature multiline if it's longer than LENGTH_LESS_THAN.
         * This is going to involve the writeFunction_Signature method.
         * I'm not quite sure how yet.
         * I kinda hate to say it, but I think I may need to abstract everything after line 12 to a separate function.
@@ -834,9 +834,27 @@ Things I want to come back to:
                 * But there's no new line if it's the first time it's run, i.e., if there currently is no file.
             ? Wait-- This can't be used to delete lines.
             --Okay, back to the previous idea.
-        > Commit.
-        > Unstash changes to writing signature.
-        >>Fill in blanks here-- Need to append to line or something.
+        + Commit.
+        + Unstash changes to writing signature.
+        ? Okay...  how was this supposed to help me with the opening bracket?
+            * The only thing I can think of is if it's long, append to line, else append to file.
+            * Oh, this is bad.  Really bad.  Everything about writeFunction_Signature is terrible.  I don't really know how to fix it.
+> Refactor some of writeFunction_Signature.
+    * There is a *little* bit that I can do.
+    > Remove everything from signature except args.
+        * That's only because buildVerticalSignature calls buildSignature and the only thing that's different is args.
+        * And probably want args to default to null, with what's in writeFunction_Signature's $args to be the default value.
+    > Update writeFunction_Signature.
+        * *Everything* before the "declaration" part can be removed now.
+    > Update buildVerticalSignature.
+        * Change the way buildSignature is called.
+        * Remove everything from its own signature.
+> Redo some of abstract functions.
+    * Now that I can append to line, it would be better to append the ';' to the line and treat the abstract keyword the same as other keywords.
+> Handle the empty space after last function.
+    * Should be easy now.
+    ! Be sure to check the edge case that there are no methods.
+        * And try to think of other edge cases.
 > Pass by reference.
     * Reminder: Don't use & in XML.  It needs to be &amp;, and I probably don't want to do it that way, anyway.
     * My current thinking is `passby="ref"`.  Default value of `passby` would be `"val"`.

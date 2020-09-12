@@ -23,7 +23,7 @@
             <trait value='OurTrait'/>
         </traits>
         <properties>
-            <property type="int" name="count" default="1" doc="The count."/>
+            <property type="?int" name="count" default="1" doc="The count."/>
             <comment>This is a comment in the properties.</comment>
             <comment>{{propmac}}</comment>
             <property type="string" setter="0" name="name" doc="The name of the object."/>
@@ -107,6 +107,13 @@
         </properties>
         <methods>
             <method return="int" name="newMethod" doc="Attribute method doc."/>
+            <method name="longSignature" return="void">
+                <doc>This method should have a very long signature.</doc>
+                <input type="string" name="var01" desc="This is a variable."/>
+                <input type="string" name="var02" desc="This is a variable."/>
+                <input type="string" name="var03" desc="This is a variable."/>
+                <input type="string" name="var04" desc="This is a variable."/>
+            </method>
         </methods>
     </class>
 </phlute>

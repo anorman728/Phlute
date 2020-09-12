@@ -22,7 +22,8 @@ $xml = <<<'__XML'
     </uses>
     <method name="myfunction" return="string">
         <doc>This is a function.</doc>
-        <input type="string|int" name="myvariable" desc="This is a variable."/>
+        <input type="string" name="myvariable" desc="This is a variable."/>
+        <input type="string" name="myvariable2" desc="This is another variable."/>
         <input type="bool" name="model">
             <desc>A model for your enjoyment.</desc>
         </input>
