@@ -851,7 +851,7 @@ Things I want to come back to:
         * Remove everything from its own signature.
 + Redo some of abstract functions.
     * Now that I can append to line, it would be better to append the ';' to the line and treat the abstract keyword the same as other keywords.
-> Handle the empty space after last function.
++ Handle the empty space after last function.
     * Should be easy now.
     ! Be sure to check the edge case that there are no methods.
         * And try to think of other edge cases.
@@ -908,9 +908,10 @@ Things I want to come back to:
                 <attribute type="expectedExceptionMessage">Unexpected item in bagging area.</attribute>
             </extra-docblock-attributes>
         @end=xml@
-> Space at the end of last method.
+- Space at the end of last method.
     * This was something that I originally fixed in a stupid way, by putting a space before the function.
     * I'm not sure yet how to fix it, but I probably should.
+    --Already fixed.
 
 ! This is the point where I would call this project probably effectively done for 1.0.
     * Though at this point I'm not actually versioning.

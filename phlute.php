@@ -349,6 +349,10 @@ class ClassBuilder
         $this->appendTraits();
         $this->appendProperties();
         $this->appendMethods();
+
+        // Whatever the last thing was written, there's an extra line at the end.
+        $this->getFileWriter()->deleteLastLine();
+
         $this->closeClass();
     }
 
