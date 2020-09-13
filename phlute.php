@@ -1274,7 +1274,8 @@ class DocblockBuilder
         $startline = $this->getDecorations()['line_start'];
 
         if (is_null($startline)) {
-            return;
+            throw new Exception(__METHOD__ . ':: Decorations can never have'
+            . ' null line starts.');
         }
 
         $sp = (strlen($content) == 0) ? '' : ' ';
@@ -2046,27 +2047,16 @@ class MethodBuilder extends ElementBuilder
      */
     private function writeFunction_Signature()
     {
-        $vis  = $this->getVisibility();
-        $stat = $this->isStatic() ? ' static' : '';
-        $name = $this->getAttribute('name');
         $args = implode(', ', $this->buildArgumentsArray());
 
-        $returnType = $this->getAttribute('return');
-
-        $returnType = $this->enforceReturnType($returnType)
-            ? ": $returnType"
-            : ''
-        ;
-
-        $declaration
-            = $this->buildSignature($vis, $stat, $name, $args, $returnType);
+        $declaration = $this->buildSignature($args);
 
         $decLength = strlen($declaration)
             + $this->getIndentLvl() * CommonConstants::INDENT_WIDTH;
 
         if ($decLength >= CommonConstants::LENGTH_LESS_THAN) {
             // Too long, then retry.
-            $declaration = $this->buildVerticalSignature($vis, $stat, $name, $returnType);
+            $declaration = $this->buildVerticalSignature();
             $this->verticalSig = true;
         }
 
@@ -2135,13 +2125,19 @@ class MethodBuilder extends ElementBuilder
      *  Return type.
      * @return  string
      */
-    private function buildSignature(
-        string $vis,
-        string $stat,
-        string $name,
-        string $args,
-        string $returnType
-    ): string {
+    private function buildSignature(string $args): string
+    {
+        $vis  = $this->getVisibility();
+        $stat = $this->isStatic() ? ' static' : '';
+        $name = $this->getAttribute('name');
+
+        $returnType = $this->getAttribute('return');
+
+        $returnType = $this->enforceReturnType($returnType)
+            ? ": $returnType"
+            : ''
+        ;
+
         $declaration = "{$vis}{$stat} function $name($args)$returnType";
 
         if ($this->isAbstract()) {
@@ -2164,12 +2160,8 @@ class MethodBuilder extends ElementBuilder
      *  Return type.
      * @return  string
      */
-    private function buildVerticalSignature(
-        string $vis,
-        string $stat,
-        string $name,
-        string $returnType
-    ): string {
+    private function buildVerticalSignature(): string
+    {
         $argsArr = [];
 
         foreach ($this->buildArgumentsArray() as $arg) {
@@ -2179,7 +2171,7 @@ class MethodBuilder extends ElementBuilder
         $args = implode(',', $argsArr);
         $args.= "\n" . buildIndent($this->getIndentlvl());
 
-        return $this->buildSignature($vis, $stat, $name, $args, $returnType);
+        return $this->buildSignature($args);
     }
 
     /**

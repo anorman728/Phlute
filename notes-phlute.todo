@@ -771,7 +771,7 @@ Things I want to come back to:
         --Not adding references from other sections after all.
 ! Note: 'doc' is the attribute if it's the docblock description.  'desc' is the attribute if it's the description of a docblock attribute.
     * I've added that to the README.
-> Signature needs to be multiline if too long.
++ Signature needs to be multiline if too long.
     * The 81 constant for docblock needs to be abstracted somewhere.
         * Probably as a CommonConstants class.
     + Create CommonConstants class and abstract LENGTH_LESS_THAN constant.
@@ -839,14 +839,14 @@ Things I want to come back to:
         ? Okay...  how was this supposed to help me with the opening bracket?
             * The only thing I can think of is if it's long, append to line, else append to file.
             * Oh, this is bad.  Really bad.  Everything about writeFunction_Signature is terrible.  I don't really know how to fix it.
-> Refactor some of writeFunction_Signature.
++ Refactor some of writeFunction_Signature.
     * There is a *little* bit that I can do.
-    > Remove everything from signature except args.
+    + Remove everything from signature except args.
         * That's only because buildVerticalSignature calls buildSignature and the only thing that's different is args.
         * And probably want args to default to null, with what's in writeFunction_Signature's $args to be the default value.
-    > Update writeFunction_Signature.
+    + Update writeFunction_Signature.
         * *Everything* before the "declaration" part can be removed now.
-    > Update buildVerticalSignature.
+    + Update buildVerticalSignature.
         * Change the way buildSignature is called.
         * Remove everything from its own signature.
 > Redo some of abstract functions.
