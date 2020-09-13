@@ -849,7 +849,7 @@ Things I want to come back to:
     + Update buildVerticalSignature.
         * Change the way buildSignature is called.
         * Remove everything from its own signature.
-> Redo some of abstract functions.
++ Redo some of abstract functions.
     * Now that I can append to line, it would be better to append the ';' to the line and treat the abstract keyword the same as other keywords.
 > Handle the empty space after last function.
     * Should be easy now.

@@ -2025,7 +2025,7 @@ class MethodBuilder extends ElementBuilder
         $this->writeFunction_Signature();
 
         if ($this->isAbstract()) {
-            // Nothing to do-- Abstract functions don't have content.
+            $this->getFileWriter()->appendToLine(';');
             return;
         }
 
@@ -2127,6 +2127,7 @@ class MethodBuilder extends ElementBuilder
      */
     private function buildSignature(string $args): string
     {
+        $abs  = $this->isAbstract() ? 'abstract ' : '';
         $vis  = $this->getVisibility();
         $stat = $this->isStatic() ? ' static' : '';
         $name = $this->getAttribute('name');
@@ -2138,11 +2139,7 @@ class MethodBuilder extends ElementBuilder
             : ''
         ;
 
-        $declaration = "{$vis}{$stat} function $name($args)$returnType";
-
-        if ($this->isAbstract()) {
-            $declaration = "abstract $declaration;";
-        }
+        $declaration = "{$abs}{$vis}{$stat} function $name($args)$returnType";
 
         return $declaration;
     }
