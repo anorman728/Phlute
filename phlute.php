@@ -1809,11 +1809,28 @@ class PropertyBuilder extends ElementBuilder
      */
     private function writeGetter()
     {
+        // Do nothing if disabled.
         if ($this->getAttribute('getter') === '0') {
             // Do nothing; user disabled getter for this property.
+            // Todo: Warning if custom getter is defined, but is disabled from
+            // here.
             return;
         }
 
+
+        // Use custom, if provided.
+        $customGetter = getFirstImmediateChildByName(
+            $this->getElementNode(),
+            'getter'
+        );
+
+        if (!is_null($customGetter)) {
+            $this->writeMethodElToFile($customGetter);
+            return;
+        }
+
+
+        // Generate plain getter otherwise.
         $name = $this->getAttribute('name');
 
         // Want to dynamically create method element from scratch.
@@ -1845,11 +1862,26 @@ class PropertyBuilder extends ElementBuilder
         // to avoid code duplication, but they're actually fairly different from
         // each other.
 
+        // Do nothing if disabled.
         if ($this->getAttribute('setter') === '0'){
             // Do nothing; user disabled setter for this property.
             return;
         }
 
+
+        // Use custom, if provided.
+        $customSetter = getFirstImmediateChildByName(
+            $this->getElementNode(),
+            'setter'
+        );
+
+        if (!is_null($customSetter)) {
+            $this->writeMethodElToFile($customSetter);
+            return;
+        }
+
+
+        // Generate plain setter otherwise.
         $name = $this->getAttribute('name');
 
         // Want to dynamically create method element from scratch.

@@ -103,6 +103,8 @@ The `properties` element is a parent element to both `property` and `constant` e
 
 The getter and setter can be suppressed by defining an optional `getter` or `setter` attribute and setting it to `0`, like `<property type="int" setter="0" name="nosetter" doc="This property has no setter function."/>
 
+Custom getters and setters can be defined by child elements of the `property` element.  These getters and setters are defined exactly like other methods, but the xml element would be named `getter` or `setter`.
+
 Type currently must be defined and that will be enforced in the resulting getter and setter, but a future update will allow "variant" where there is no enforced type.
 
 An optional attribute for `property` elements is the `keywords` attribute.  A `property` element can have one keyword, and that is the `static` keyword.  If it is declared as static, its corresponding getters and setters will be static.
