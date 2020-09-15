@@ -2078,7 +2078,9 @@ class MethodBuilder extends ElementBuilder
 
         $returnArr = [];
         foreach ($inputs as $input) {
-            $returnEl = '$' . $input->getAttribute('name');
+            $passby = ($this->getPassby($input) == 'ref') ? '&' : '';
+
+            $returnEl = $passby . '$' . $input->getAttribute('name');
 
             $typedum = $input->getAttribute('type');
             if ($this->enforceReturnType($typedum)) {
@@ -2205,6 +2207,17 @@ class MethodBuilder extends ElementBuilder
     private function isAbstract(): bool
     {
         return in_array('abstract', $this->getKeywords());
+    }
+
+    /**
+     * Get an input's "passby" value ('val' or 'ref').
+     *
+     * @param   DOMNode     $inputEl
+     * @return  string
+     */
+    private function getPassby(DOMNode $inputEl): string
+    {
+        return ($inputEl->getAttribute('passby') ?? 'val');
     }
 
 }

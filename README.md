@@ -131,7 +131,7 @@ The child elements of a method element are `doc`, `input`, and `content`.
 
 `doc` is required for any method element, but it's the only required child element.
 
-You can have as few or as many `input` elements as you like.  Its attributes are `type`, `name`, and `desc`.  `type` and `name` are required, but `desc` is optional.
+You can have as few or as many `input` elements as you like.  Its attributes are `type`, `name`, `desc`, and `passby`.  `type` and `name` are required, but `desc` and `passby` are optional.  `passby` can be `ref` or `val`.
 
 The `content` element is optional and contains PHP within CDATA tags.  (This is similar to how an RSS feed would contain HTML within CDATA tags.)  (This is also why there's a modeline towards the beginning of the example file-- I modified the xml syntax highlighter for Vim to highlight the inside of CDATA as PHP.
 
