@@ -2919,9 +2919,91 @@ function childOverAttribute(DOMNode $el, string $name): string
 
 // Main script below.
 
-if (!isset($argv[1])) {
-    print("Missing input xml file.\n");
-    // Don't want to exit, because test files are going to be using this.
-} else {
-    (new Main($argv[1]))->run();
+/**
+ * Class for handling CLI inputs.
+ *
+ * @author  Andrew Norman
+ */
+class CliInputs
+{
+    /** @var array $arguments. */
+    private $args;
+
+    /**
+     * Constructor.
+     *
+     * @param   array   $argv
+     * @return  void
+     */
+    public function __construct(array $argv)
+    {
+        $this->args = $argv;
+    }
+
+    /**
+     * Determine if a flag is set.
+     *
+     * @param   string  $flagName
+     * @return  bool
+     */
+    public function isFlagSet(string $flagName): bool
+    {
+        return in_array("--$flagName", $this->args);
+    }
+
+    /**
+     * Get a flag value.
+     *
+     * @param   string  $flagName
+     * @return  string
+     */
+    public function getFlagVal(string $flagName): string
+    {
+        $ind = array_search("--$flagName", $this->args) + 1;
+
+        $missingErr = 'Missing value for ' . $flagName;
+
+        if (!array_key_exists($ind, $this->args)) {
+            throw new Exception($missingErr);
+        }
+
+        $returnVal = $this->args[$ind];
+
+        if (substr($returnVal, 0, 2) == '--') {
+            throw new Exception($missingErr);
+        }
+
+        return $returnVal;
+    }
+
+    /**
+     * Determine if input file is set.
+     *
+     * @return  bool
+     */
+    public function inputFileIsSet(): bool
+    {
+        return isset($this->args[1]);
+    }
+
+    /**
+     * Return the input file as passed.
+     *
+     * @return  string
+     */
+    public function getInputFile(): string
+    {
+        return $this->args[1];
+    }
+
+}
+
+$cliInputs = new CliInputs($argv);
+
+if (!$cliInputs->isFlagSet('donotrun')) {
+    if ($cliInputs->inputFileIsSet()) {
+        (new Main($cliInputs->getInputFile()))->run();
+    } else {
+        print("Missing input xml file.\n");
+    }
 }
