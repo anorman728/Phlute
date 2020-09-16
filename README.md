@@ -152,3 +152,5 @@ In both cases, child elements can be used instead of attributes.  (More-or-less 
 ### Other stuff.
 
 Can delete files that would otherwise create by adding the `--delete` flag to the CLI.
+
+Can overwrite existing files by adding the `--force` flag to the CLI.

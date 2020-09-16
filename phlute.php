@@ -3079,7 +3079,7 @@ class CliInputs
      */
     public function isInputFileSet(): bool
     {
-        return $this->isVal($this->getByIndex(1));
+        return array_key_exists(1, $this->args) && $this->isVal($this->getByIndex(1));
     }
 
     /**
@@ -3143,9 +3143,12 @@ if (!$cliInputs->isFlagSet('donotrun')) {
     $main = new Main($cliInputs->getInputFile());
 
     if ($cliInputs->shouldRunNormally()) {
-        $main->run($cliInputs->getInputFile());
+        $main->run();
     } elseif ($cliInputs->isFlagSet('delete')) {
-        $main->delete($cliInputs->getInputFile());
+        $main->delete();
+    } elseif ($cliInputs->isFlagSet('force')) {
+        $main->delete();
+        $main->run();
     } else {
         print("Missing input xml file.\n");
     }
