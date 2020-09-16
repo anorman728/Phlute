@@ -94,7 +94,7 @@
             </method>
         </methods>
     </class>
-    <class name="MyClass3" author="Misshapen Head" namespace="App\Lib\MyNamespace" output="./output/MyNamespace" doc="Attribute documentation.">
+    <class name="MyClass3" author="Misshapen Head" namespace="App\Lib\MyNamespace" doc="Attribute documentation.">
         <properties>
             <public>
                 <property type="string" name="prop01" default="7">
@@ -116,4 +116,10 @@
             </method>
         </methods>
     </class>
+    <trait name="MyTrait" author="Andrew Norman" namespace="App\Lib\MyTraits">
+        <doc>This is a trait.</doc>
+        <properties>
+            <constant name="TEST_CONST" type="int" value="9" doc="testing constant"/>
+        </properties>
+    </trait>
 </phlute>

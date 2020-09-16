@@ -183,7 +183,10 @@ class Main
      */
     private function getClassElements(): array
     {
-        return getImmediateChildrenByName($this->getRootNode(), 'class');
+        return getImmediateChildrenByName(
+            $this->getRootNode(),
+            ['class', 'trait']
+        );
     }
 
     /**
@@ -631,7 +634,8 @@ class ClassBuilder
     private function openClass()
     {
         $openline = $this->abstractDeclarationIfApplicable();
-        $openline.= 'class ';
+        //$openline.= 'class ';
+        $openline.= $this->getClassNode()->nodeName . ' ';
         $openline.= $this->pullClassName();
         $openline.= $this->pullExtension();
         $openline.= $this->pullImplement();
@@ -2908,17 +2912,25 @@ function buildIndent(int $indentlvl): string
 /**
  * Find all *immediate* children of an element of a particular name.
  *
- * @param   DOMNode     $node
- * @param   string      $name
+ * @param   DOMNode         $node
+ * @param   string|array    $name
  * @return  array
  */
-function getImmediateChildrenByName(DOMNode $node, string $name): array
+function getImmediateChildrenByName(DOMNode $node, $name): array
 {
     // This is ten thousand times easier in Dart.
     $returnArr = [];
 
+    if (!is_array($name) && !is_string($name)) {
+        throw new Exception("Received invalid value for \$name.");
+    }
+
+    if (is_string($name)) {
+        $name = [$name];
+    }
+
     foreach ($node->childNodes as $childNode) {
-        if ($childNode->nodeName == $name) {
+        if (in_array($childNode->nodeName, $name)) {
             $returnArr[] = $childNode;
         }
     }
