@@ -148,3 +148,7 @@ The `throws` child elements can be used to define `@throws` tags in the resultin
 A `doc` attribute is used to define the main description of a class, method, property, or constant's docblock.  A `desc` attribute is used to define a description of a particular item in the docblock.  In both cases, they end up in the docblock, but the `doc` attribute is the main description at the top of the docblock and the `desc` attribute is the description of a particular item at the bottom.
 
 In both cases, child elements can be used instead of attributes.  (More-or-less the default/expected input for docs, in fact.)  If you use a child element, you can use macros.
+
+### Other stuff.
+
+Can delete files that would otherwise create by adding the `--delete` flag to the CLI.

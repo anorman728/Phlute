@@ -11,6 +11,9 @@ class Main
     /** @var DOMDocument The document object representing the xml input.  */
     private $xmlInput;
 
+    /** @var DOMNode Root node. */
+    private $rootNode;
+
     /** @var string Default output directory. */
     private $defaultOutputDir;
 
@@ -56,12 +59,33 @@ class Main
     public function getDefaultOutputDir(): string
     {
         if (!strlen($this->defaultOutputDir)) {
-            throw new Exception('Default output directory doesn\'t seem to be set,'
-            . ' but at least one class does not have a hardcoded output'
+            throw new Exception('Default output directory doesn\'t seem to'
+            . ' be set, but at least one class does not have a hardcoded output'
             . ' directory.');
         }
 
         return $this->defaultOutputDir;
+    }
+
+    /**
+     * Setter for rootNode.
+     *
+     * @param   DOMNode $input
+     * @return  void
+     */
+    public function setRootNode(DOMNode $input)
+    {
+        $this->rootNode = $input;
+    }
+
+    /**
+     * Getter for rootNode.
+     *
+     * @return  DOMNode
+     */
+    public function getRootNode(): DOMNode
+    {
+        return $this->rootNode;
     }
 
 
@@ -76,28 +100,8 @@ class Main
      */
     public function __construct(string $inputpath)
     {
-        $filecontent = file_get_contents($inputpath);
+        $this->loadXmlFile($inputpath);
 
-        $this->checkInvalidCData($filecontent);
-
-        $dom = new DOMDocument();
-        $dom->preserveWhiteSpace = false;
-        $success = $dom->loadXml($filecontent);
-
-        if (!$success) {
-            throw new Exception("Invalid XML.  See warnings above.");
-        }
-
-        $this->setXmlInput($dom);
-    }
-
-    /**
-     * Run function.
-     *
-     * @return  void
-     */
-    public function run()
-    {
         $root = getFirstImmediateChildByName($this->getXmlInput(), 'phlute');
 
         // Get output directory.
@@ -111,16 +115,76 @@ class Main
             MacroProcessor::parseMacros($macros);
         }
 
+        $this->setRootNode($root);
+    }
+
+    /**
+     * Build all files.
+     *
+     * @return  void
+     */
+    public function run()
+    {
         // Build each individual class.
-        foreach (getImmediateChildrenByName($root, 'class') as $node) {
+        foreach ($this->getClassElements() as $node) {
             $this->buildClassFile($node);
         }
 
         print_r("Done.\n");
     }
 
+    /**
+     * Delete all files that would otherwise create.
+     *
+     * @return  void
+     */
+    public function delete()
+    {
+        // Delete all class files, if they exist.
+        foreach ($this->getClassElements() as $node) {
+            $this->deleteClassFile($node);
+        }
+
+        print_r("Done deleting files.\n");
+    }
+
 
     // Helper functions below this line.
+
+    /**
+     * Load XML file.
+     *
+     * @param   string  $inputpath
+     * @return  void
+     */
+    private function loadXmlFile(string $inputpath)
+    {
+        $filecontent = file_get_contents($inputpath);
+
+        $this->checkInvalidCData($filecontent);
+
+        $dom = new DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $success = $dom->loadXml($filecontent);
+
+        if (!$success) {
+            throw new Exception("Invalid XML.  See warnings above.");
+        }
+
+        $this->setXmlInput($dom);
+
+    }
+
+    /**
+     * Get all "class-like" elements from root directory (classes, traits,
+     * interfaces, etc).
+     *
+     * @return  array
+     */
+    private function getClassElements(): array
+    {
+        return getImmediateChildrenByName($this->getRootNode(), 'class');
+    }
 
     /**
      * Build a class file.
@@ -133,6 +197,25 @@ class Main
     private function buildClassFile(DOMElement $classNode)
     {
         (new ClassBuilder($classNode, $this->buildDirectory($classNode)))->write();
+    }
+
+    /**
+     * Delete class file if it exists.  Do nothing otherwise.
+     *
+     * @param   DOMNode     $classNode
+     * @return  void
+     */
+    private function deleteClassFile(DOMNode $classNode)
+    {
+        $path = buildFilePath(
+            $this->buildDirectory($classNode),
+            $classNode->getAttribute('name')
+        );
+
+        if (file_exists($path)) {
+            print_r("Deleting $path.\n");
+            unlink($path);
+        }
     }
 
     /**
@@ -442,7 +525,7 @@ class ClassBuilder
     private function buildFilePath(): string
     {
         if (is_null($this->filePath)) {
-            $this->filePath = $this->getDirectoryPath() . '/' . $this->pullClassName() . '.php';
+            $this->filePath = buildFilePath($this->getDirectoryPath(), $this->pullClassName());
         }
 
         return $this->filePath;
@@ -2799,6 +2882,19 @@ class CommonConstants
 // Shared functions below.
 
 /**
+ * Build a file path from a directory and filename, excluding the php
+ * extension.
+ *
+ * @param   string      $directory
+ * @param   string      $filename
+ * @return  string
+ */
+function buildFilePath(string $directory, string $filename): string
+{
+    return "{$directory}/{$filename}.php";
+}
+
+/**
  * Build an indent level.
  *
  * @param   int     $indentlvl
@@ -2969,7 +3065,7 @@ class CliInputs
 
         $returnVal = $this->args[$ind];
 
-        if (substr($returnVal, 0, 2) == '--') {
+        if (!$this->isVal($returnVal)) {
             throw new Exception($missingErr);
         }
 
@@ -2977,13 +3073,13 @@ class CliInputs
     }
 
     /**
-     * Determine if input file is set.
+     * Determine if the input file is set.
      *
      * @return  bool
      */
-    public function inputFileIsSet(): bool
+    public function isInputFileSet(): bool
     {
-        return isset($this->args[1]);
+        return $this->isVal($this->getByIndex(1));
     }
 
     /**
@@ -2993,7 +3089,46 @@ class CliInputs
      */
     public function getInputFile(): string
     {
-        return $this->args[1];
+        if (!$this->isInputFileSet()) {
+            throw new Exception("First argument must be path to input xml.");
+        }
+
+        return $this->getByIndex(1);
+    }
+
+    /**
+     * Determine if should attempt to run normally.
+     *
+     * @return  bool
+     */
+    public function shouldRunNormally(): bool
+    {
+        return count($this->args) == 2;
+    }
+
+
+    // Helper functions below this line.
+
+    /**
+     * Determine if a passed string is a a value (the alternative being a flag).
+     *
+     * @param   string      $inputStr
+     * @return  bool
+     */
+    private function isVal(string $inputStr): bool
+    {
+        return substr($inputStr, 0, 2) != '--';
+    }
+
+    /**
+     * Get a value or flag by its index.
+     *
+     * @param   int     $ind
+     * @return  string
+     */
+    private function getByIndex(int $ind): string
+    {
+        return $this->args[$ind];
     }
 
 }
@@ -3001,8 +3136,16 @@ class CliInputs
 $cliInputs = new CliInputs($argv);
 
 if (!$cliInputs->isFlagSet('donotrun')) {
-    if ($cliInputs->inputFileIsSet()) {
-        (new Main($cliInputs->getInputFile()))->run();
+    if (!$cliInputs->isInputFileSet()) {
+        die("Missing input xml file.\n");
+    }
+
+    $main = new Main($cliInputs->getInputFile());
+
+    if ($cliInputs->shouldRunNormally()) {
+        $main->run($cliInputs->getInputFile());
+    } elseif ($cliInputs->isFlagSet('delete')) {
+        $main->delete($cliInputs->getInputFile());
     } else {
         print("Missing input xml file.\n");
     }
