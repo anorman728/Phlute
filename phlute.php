@@ -464,6 +464,9 @@ class ClassBuilder
         $this->appendMethods();
 
         // Whatever the last thing was written, there's an extra line at the end.
+        // TODO: There's a bug here if the class is completely empty, but I
+        // have a hard time motivating myself to fix it because, then why'd
+        // you make it?
         $this->getFileWriter()->deleteLastLine();
 
         $this->closeClass();
@@ -2347,12 +2350,18 @@ class MethodBuilder extends ElementBuilder
         $returnArr = [];
         foreach ($inputs as $input) {
             $typedum = $input->getAttribute('type');
+            $isstring = ($typedum == 'string'); // Need this later.
             $typedum = $this->enforceReturnType($typedum) ? "$typedum " : '';
 
             $passby = ($this->getPassby($input) == 'ref') ? '&' : '';
 
             $defaultval = $input->getAttribute('default');
-            $defaultval = $defaultval ? " = $defaultval" : '';
+            if ($defaultval && $isstring) {
+                $defaultval = "\"$defaultval\"";
+            }
+            if ($defaultval) {
+                $defaultval = " = $defaultval";
+            }
 
             $returnEl = $typedum . $passby . '$' . $input->getAttribute('name')
                 . $defaultval;
