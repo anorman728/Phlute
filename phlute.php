@@ -970,6 +970,7 @@ class FileWriter
      */
     public function __destruct()
     {
+        $this->popAndWrite(PHP_EOL);
         $this->popAndWrite('//END');
         // If we ever *see* "//END", then we know something's wrong, because it
         // should go into the buffer and just be discarded.
@@ -1061,7 +1062,7 @@ class FileWriter
     {
         $lineContent = rtrim($lineContent);
 
-        $lb = file_exists($this->getFilePath()) ? "\n" : '';
+        $lb = file_exists($this->getFilePath()) ? PHP_EOL : '';
 
         file_put_contents(
             $this->getFilePath(),
@@ -1440,7 +1441,7 @@ class DocblockBuilder
         $str = $input;
         $str = trim($str); // Remove whitespace on ends.
 
-        $str = preg_replace('/[\r\n](\s+)?[\r\n]/', "##PARA4672##\r\n", $str);
+        $str = preg_replace('/[\r\n](\s+)?[\r\n]/', "##PARA4672##" . PHP_EOL, $str);
         // Replace paragraph breaks with marker.
         $str = preg_replace('/[\r\n](\s)+/', '' , $str);
         // Remove whitespace after line breaks.
@@ -2355,11 +2356,11 @@ class MethodBuilder extends ElementBuilder
         $argsArr = [];
 
         foreach ($this->buildArgumentsArray() as $arg) {
-            $argsArr[] = "\n" . buildIndent($this->getIndentlvl() + 1) . $arg;
+            $argsArr[] = PHP_EOL . buildIndent($this->getIndentlvl() + 1) . $arg;
         }
 
         $args = implode(',', $argsArr);
-        $args.= "\n" . buildIndent($this->getIndentlvl());
+        $args.= PHP_EOL . buildIndent($this->getIndentlvl());
 
         return $this->buildSignature($args);
     }
@@ -2493,7 +2494,7 @@ class CDataHandler
      */
     public function build(): array
     {
-        $contentArr = explode("\n", $this->getCDataNode()->textContent);
+        $contentArr = explode(PHP_EOL, $this->getCDataNode()->textContent);
 
         $this->removePhpTags($contentArr);
 
