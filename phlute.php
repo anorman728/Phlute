@@ -2182,6 +2182,11 @@ class MethodBuilder extends ElementBuilder
             $docblock->addAttribute('param', $dets);
         }
 
+        // Extra attributes.
+        foreach ($this->getExtraAttributes() as $name => $attArr) {
+            $docblock->addAttribute($name, $attArr);
+        }
+
         // Return line.
         $returnVal = $this->buildFullyQualifiedClassOrType(
             $this->getAttribute('return'));
@@ -2202,6 +2207,35 @@ class MethodBuilder extends ElementBuilder
 
         // Write.
         $docblock->write();
+
+    }
+
+    /**
+     * Get all extra attributes going into docblock as an array mapping
+     * name to array of data.
+     *
+     * Return empty array if there are none.
+     *
+     * @return  array
+     */
+    private function getExtraAttributes(): array
+    {
+        $returnArr = [];
+
+        $extraDoc = getFirstImmediateChildByName(
+            $this->getElementNode(),
+            'doc-extra'
+        );
+
+        if (is_null($extraDoc)) {
+            return $returnArr;
+        }
+
+        foreach (getImmediateChildrenByName($extraDoc, 'attribute') as $node) {
+            $returnArr[$node->getAttribute('name')] = [getNodeText($node)];
+        }
+
+        return $returnArr;
 
     }
 

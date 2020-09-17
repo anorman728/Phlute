@@ -122,7 +122,7 @@
             <constant name="TEST_CONST" type="int" value="9" doc="testing constant"/>
         </properties>
     </trait>
-    <interface name="MyInterface" author="Andrew norman" namespace="App\Lib\MyTraits" output="./output/Lib">
+    <interface name="MyInterface" author="Andrew Norman" namespace="App\Lib\MyTraits" output="./output/Lib">
         <doc>This is an interface.</doc>
         <methods>
             <method return="int" name="interfaceMethod">
@@ -130,4 +130,31 @@
             </method>
         </methods>
     </interface>
+    <class name="MyClassTest" author="Andrew Norman" namespace="App\Test\TestCase\Lib" output="./output/test/TestCase/Lib">
+        <doc>Test case for MyClass.</doc>
+        <uses>
+            <use value="PHPUnit\TestCase"/>
+            <use value="App\Lib\MyClass"/>
+        </uses>
+        <methods>
+            <public>
+                <method return="void" name="testIncrement">
+                    <doc>Test increment function.</doc>
+                    <doc-extra>
+                        <attribute name="covers">App\Lib\MyClass::increment</attribute>
+                        <!-- Can, and probably should, use macros, so don't have to repeat the fully-namespaced class every time. -->
+                    </doc-extra>
+                </method>
+                <method return="void" name="testIncrementException">
+                    <!-- This makes zero sense given what the increment function does, but bear with me. -->
+                    <doc>Test exception if have invalid input.</doc>
+                    <doc-extra>
+                        <attribute name="covers">App\Lib\MyClass::increment</attribute>
+                        <attribute name="expectedException">\InvalidArgumentException</attribute>
+                        <attribute name="expectedExceptionMessage">Unexpected item in bagging area.</attribute>
+                    </doc-extra>
+                </method>
+            </public>
+        </methods>
+    </class>
 </phlute>
