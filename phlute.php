@@ -2340,14 +2340,16 @@ class MethodBuilder extends ElementBuilder
 
         $returnArr = [];
         foreach ($inputs as $input) {
+            $typedum = $input->getAttribute('type');
+            $typedum = $this->enforceReturnType($typedum) ? "$typedum " : '';
+
             $passby = ($this->getPassby($input) == 'ref') ? '&' : '';
 
-            $returnEl = $passby . '$' . $input->getAttribute('name');
+            $defaultval = $input->getAttribute('default');
+            $defaultval = $defaultval ? " = $defaultval" : '';
 
-            $typedum = $input->getAttribute('type');
-            if ($this->enforceReturnType($typedum)) {
-                $returnEl = "$typedum $returnEl";
-            }
+            $returnEl = $typedum . $passby . '$' . $input->getAttribute('name')
+                . $defaultval;
 
             $returnArr[] = $returnEl;
         }
