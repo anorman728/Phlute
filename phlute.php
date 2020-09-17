@@ -970,7 +970,6 @@ class FileWriter
      */
     public function __destruct()
     {
-        $this->popAndWrite(PHP_EOL);
         $this->popAndWrite('//END');
         // If we ever *see* "//END", then we know something's wrong, because it
         // should go into the buffer and just be discarded.
@@ -1062,11 +1061,9 @@ class FileWriter
     {
         $lineContent = rtrim($lineContent);
 
-        $lb = file_exists($this->getFilePath()) ? PHP_EOL : '';
-
         file_put_contents(
             $this->getFilePath(),
-            $lb . $lineContent,
+            $lineContent . PHP_EOL,
             FILE_APPEND
         );
     }
