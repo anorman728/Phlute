@@ -729,7 +729,9 @@ class ClassBuilder
 
 
         // Add the getters and setters.
-        $this->writeSettersAndGetters($propertiesArr);
+        if ($this->needToWriteSettersOrGetters($propertiesArr)) {
+            $this->writeSettersAndGetters($propertiesArr);
+        }
 
     }
 
@@ -887,6 +889,27 @@ class ClassBuilder
 
         // Add extra space after all is done.
         $this->getFileWriter()->appendToFile('');
+    }
+
+    /**
+     * Determine if there are going to be setters and/or getters to write.
+     *
+     * @param   ArrayObject     $propertiesArr
+     * @return  bool
+     */
+    private function needToWriteSettersOrGetters(
+        ArrayObject $propertiesArr
+    ): bool {
+        foreach ($propertiesArr as $property) {
+            foreach (['setter', 'getter'] as $type) {
+                $attval = $property->getElementNode()->getAttribute($type);
+                if ((!$attval) || $attval = 1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
 }
