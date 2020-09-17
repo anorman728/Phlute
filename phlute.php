@@ -149,7 +149,14 @@ class Main
     {
         // Delete all class files, if they exist.
         foreach ($this->getClassElements() as $node) {
-            $this->deleteClassFile($node);
+            try {
+                $this->deleteClassFile($node);
+            } catch (Throwable $t) {
+                print_r('Exception caught deleting class '
+                . $node->getAttribute('name') . ': ' . $t->getMessage()
+                . PHP_EOL);
+                die("Halting execution\n");
+            }
         }
 
         print_r("Done deleting files.\n");
@@ -206,6 +213,10 @@ class Main
      */
     private function buildClassFile(DOMElement $classNode)
     {
+        if (!$classNode->getAttribute('name')) {
+            throw new Exception("Missing class name.");
+        }
+
         (new ClassBuilder($classNode, $this->buildDirectory($classNode)))->write();
     }
 
@@ -217,10 +228,13 @@ class Main
      */
     private function deleteClassFile(DOMNode $classNode)
     {
-        $path = buildFilePath(
-            $this->buildDirectory($classNode),
-            $classNode->getAttribute('name')
-        );
+        $className = $classNode->getAttribute('name');
+
+        if (!$className) {
+            throw new Exception("Missing class name.");
+        }
+
+        $path = buildFilePath($this->buildDirectory($classNode), $className);
 
         if (file_exists($path)) {
             print_r("Deleting $path.\n");
@@ -2203,7 +2217,7 @@ class MethodBuilder extends ElementBuilder
 
             $dets = [
                 $type,
-                '$' . $input->getAttribute('name'),
+                '$' . attributeOrException($input, 'name'),
                 childOverAttribute($input, 'desc')
             ];
 
@@ -2384,7 +2398,7 @@ class MethodBuilder extends ElementBuilder
         $abs  = $this->isAbstract() ? 'abstract ' : '';
         $vis  = $this->getIsInInterface() ? 'public' : $this->getVisibility();
         $stat = $this->isStatic() ? ' static' : '';
-        $name = $this->getAttribute('name');
+        $name = attributeOrException($this->getElementNode(), 'name');
 
         $returnType = $this->getAttribute('return');
 
@@ -3151,6 +3165,27 @@ function childOverAttribute(DOMNode $el, string $name): string
     }
 
     return getNodeText($child);
+}
+
+/**
+ * Get an attribute of a DOMNode, throwing an exception if it doesn't exist.
+ *
+ * @param   DOMNode     $node
+ * @param   string      $att
+ * @return  string
+ * @throws  Exception
+ *  If doesn't exist.
+ */
+function attributeOrException(DOMNode $node, string $att): string
+{
+    $returnVal = $node->getAttribute($att);
+
+    if (!$returnVal) {
+        throw new Exception("Missing $att value.");
+    }
+
+    return $returnVal;
+
 }
 
 
