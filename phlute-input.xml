@@ -99,6 +99,7 @@
             <public>
                 <property type="string" name="prop01" default="7">
                     <doc>This is documentation in child element of a property.</doc>
+                    <getter return="string" name="getProp01" doc="Custom getter for prop01."/>
                 </property>
             </public>
             <constant name="CONSTANTINOPLE" type="string" value="Turkish delight on a moonlit night.">

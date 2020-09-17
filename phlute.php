@@ -127,7 +127,14 @@ class Main
     {
         // Build each individual class.
         foreach ($this->getClassElements() as $node) {
-            $this->buildClassFile($node);
+            try {
+                $this->buildClassFile($node);
+            } catch (Throwable $t) {
+                print_r('Exception caught in class '
+                . $node->getAttribute('name') . ': ' . $t->getMessage()
+                . PHP_EOL);
+                die("Halting execution.\n");
+            }
         }
 
         print_r("Done.\n");
@@ -717,7 +724,14 @@ class ClassBuilder
             if ($vis) {
                 $propDum->setVisibility($vis);
             }
-            $propDum->write();
+            try {
+                $propDum->write();
+            } catch (Throwable $t) {
+                print_r('Exception caught in property '
+                . $el->getAttribute('name') . ': ' . $t->getMessage()
+                . PHP_EOL);
+                throw $t;
+            }
 
             $propertiesArr->append($propDum);
         };
@@ -760,7 +774,14 @@ class ClassBuilder
                 $methodBuilder->setVisibility($vis);
             }
             $methodBuilder->setIsInInterface($isInInterface);
-            $methodBuilder->write();
+            try {
+                $methodBuilder->write();
+            } catch (Throwable $t) {
+                print_r('Exception caught in method '
+                . $el->getAttribute('name') . ': ' . $t->getMessage()
+                . PHP_EOL);
+                throw $t;
+            }
         };
 
         $this->writePropertiesOrMethodsLoop($allMethods, 'method', $dummyFunc);
@@ -879,7 +900,14 @@ class ClassBuilder
         $this->getFileWriter()->appendToFile('');
 
         foreach ($propertiesArr as $property) {
-            $property->writeSettersAndGetters();
+            try {
+                $property->writeSettersAndGetters();
+            } catch(Throwable $t) {
+                print_r('Exception caught in getter or setter for '
+                . $property->getElementNode()->getAttribute('name') . ': '
+                . $t->getMessage() . PHP_EOL);
+                throw $t;
+            }
         }
 
         $this->getFileWriter()->appendToFile('');
