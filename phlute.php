@@ -729,21 +729,8 @@ class ClassBuilder
 
 
         // Add the getters and setters.
-        $this->getFileWriter()->appendToFile('');
-        $this->getFileWriter()->appendToFile('// START getters and setters.', 1);
-        $this->getFileWriter()->appendToFile('');
+        $this->writeSettersAndGetters($propertiesArr);
 
-        foreach ($propertiesArr as $property) {
-            $property->writeSettersAndGetters();
-        }
-
-        $this->getFileWriter()->appendToFile('');
-        $this->getFileWriter()->appendToFile('// END getters and setters.', 1);
-        $this->getFileWriter()->appendToFile('');
-
-
-        // Add extra space after all is done.
-        $this->getFileWriter()->appendToFile('');
     }
 
     /**
@@ -875,6 +862,31 @@ class ClassBuilder
         $this->setUsedNamespaces(new UsedNamespaces(
             getFirstImmediateChildByName($this->getClassNode(), 'uses')
         ));
+    }
+
+    /**
+     * Write the setters and getters for properties.
+     *
+     * @param   ArrayObject     $propertiesArr
+     * @return  void
+     */
+    private function writeSettersAndGetters(ArrayObject $propertiesArr)
+    {
+        $this->getFileWriter()->appendToFile('');
+        $this->getFileWriter()->appendToFile('// START getters and setters.', 1);
+        $this->getFileWriter()->appendToFile('');
+
+        foreach ($propertiesArr as $property) {
+            $property->writeSettersAndGetters();
+        }
+
+        $this->getFileWriter()->appendToFile('');
+        $this->getFileWriter()->appendToFile('// END getters and setters.', 1);
+        $this->getFileWriter()->appendToFile('');
+
+
+        // Add extra space after all is done.
+        $this->getFileWriter()->appendToFile('');
     }
 
 }
