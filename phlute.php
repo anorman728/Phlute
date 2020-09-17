@@ -185,7 +185,7 @@ class Main
     {
         return getImmediateChildrenByName(
             $this->getRootNode(),
-            ['class', 'trait']
+            ['class', 'trait', 'interface']
         );
     }
 
@@ -762,13 +762,15 @@ class ClassBuilder
 
         $writer = $this->getFileWriter();
         $usedNamespaces = $this->getUsedNamespaces();
+        $isInInterface = $this->getClassNode()->nodeName == 'interface';
 
-        $dummyFunc = function(DOMNode $el, string $vis) use ($writer, $usedNamespaces) {
+        $dummyFunc = function(DOMNode $el, string $vis) use ($writer, $usedNamespaces, $isInInterface) {
             $methodBuilder = new MethodBuilder($writer, $el, 1);
             $methodBuilder->setUsedNamespaces($usedNamespaces);
             if ($vis) {
                 $methodBuilder->setVisibility($vis);
             }
+            $methodBuilder->setIsInInterface($isInInterface);
             $methodBuilder->write();
         };
 
@@ -2070,6 +2072,37 @@ class MethodBuilder extends ElementBuilder
     /** @var bool True if using a vertical signature. */
     private $verticalSig = false;
 
+    /** @var bool True if this is a method in an interface. */
+    private $isInInterface = false;
+
+
+    // START getters and setters.
+
+    /**
+     * Setter for isInInterface.
+     *
+     * @param   bool $input
+     * @return  void
+     */
+    public function setIsInInterface(bool $input)
+    {
+        $this->isInInterface = $input;
+    }
+
+    /**
+     * Getter for isInInterface.
+     *
+     * @return  bool
+     */
+    public function getIsInInterface(): bool
+    {
+        return $this->isInInterface;
+    }
+
+
+    // END getters and setters.
+
+
     /**
      * {@inheritDoc}
      *
@@ -2147,7 +2180,7 @@ class MethodBuilder extends ElementBuilder
     {
         $this->writeFunction_Signature();
 
-        if ($this->isAbstract()) {
+        if ($this->isAbstract() || $this->getIsInInterface()) {
             $this->getFileWriter()->appendToLine(';');
             return;
         }
@@ -2253,7 +2286,7 @@ class MethodBuilder extends ElementBuilder
     private function buildSignature(string $args): string
     {
         $abs  = $this->isAbstract() ? 'abstract ' : '';
-        $vis  = $this->getVisibility();
+        $vis  = $this->getIsInInterface() ? 'public' : $this->getVisibility();
         $stat = $this->isStatic() ? ' static' : '';
         $name = $this->getAttribute('name');
 

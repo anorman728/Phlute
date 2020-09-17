@@ -63,6 +63,7 @@ $writer->appendToFile('');
 $writer->appendToFile('// Now testing with abstract functions.');
 
 $xml = <<<'__XML'
+<?xml version="1.0" encoding="UTF-8"?>
 <testdoc>
     <uses>
     </uses>
@@ -81,4 +82,26 @@ $el = $dom->getElementsByTagName('method')[0];
 
 $methodBuilder = new MethodBuilder($writer, $el, 1);
 $methodBuilder->setUsedNamespaces(new UsedNamespaces($dom->getElementsByTagname('uses')[0]));
+$methodBuilder->write();
+
+
+$writer->appendToFile('');
+$writer->appendToFile('// Now testing with abstract functions.');
+
+$xml = <<<'__XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<testdoc>
+    <method return="void" name="interfaceFunc" doc="This is what an interface function looks like."/>
+</testdoc>
+__XML;
+
+$dom = new DOMDocument();
+$dom->loadXml($xml);
+$dom->preserveWhiteSpace = false;
+
+$el = $dom->getElementsByTagName('method')[0];
+
+$methodBuilder = new MethodBuilder($writer, $el, 1);
+$methodBuilder->setUsedNamespaces(new UsedNamespaces($dom->getElementsByTagname('uses')[0]));
+$methodBuilder->setIsInInterface(true);
 $methodBuilder->write();

@@ -116,10 +116,18 @@
             </method>
         </methods>
     </class>
-    <trait name="MyTrait" author="Andrew Norman" namespace="App\Lib\MyTraits">
+    <trait name="MyTrait" author="Andrew Norman" namespace="App\Lib\MyTraits" output="./output/Lib">
         <doc>This is a trait.</doc>
         <properties>
             <constant name="TEST_CONST" type="int" value="9" doc="testing constant"/>
         </properties>
     </trait>
+    <interface name="MyInterface" author="Andrew norman" namespace="App\Lib\MyTraits" output="./output/Lib">
+        <doc>This is an interface.</doc>
+        <methods>
+            <method return="int" name="interfaceMethod">
+                <doc>This is a method for an interface.</doc>
+            </method>
+        </methods>
+    </interface>
 </phlute>
