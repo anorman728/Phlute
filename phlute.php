@@ -1003,7 +1003,8 @@ class FileWriter
     }
 
     /**
-     * Delete the last line.
+     * Delete the last line.  (Running this multiple times will not delete
+     * multiple lines.)
      *
      * (Note: From an inner-workings perspective, it doesn't delete anything
      * from disk, but just sets the buffer to null, so it won't be written to
