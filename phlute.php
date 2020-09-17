@@ -100,7 +100,13 @@ class Main
      */
     public function __construct(string $inputpath)
     {
-        $this->loadXmlFile($inputpath);
+        try {
+            $this->loadXmlFile($inputpath);
+        } catch (Throwable $t) {
+            print_r('Caught exception loading XML: ' . $t->getMessage()
+            . PHP_EOL);
+            die('Halting execution.' . PHP_EOL);
+        }
 
         $root = getFirstImmediateChildByName($this->getXmlInput(), 'phlute');
 
