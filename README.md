@@ -156,3 +156,5 @@ In both cases, child elements can be used instead of attributes.  (More-or-less 
 Can delete files that would otherwise create by adding the `--delete` flag to the CLI.
 
 Can overwrite existing files by adding the `--force` flag to the CLI.
+
+Double line breaks for `<doc>` nodes result in double line breaks in docblock descriptions.  Single spaces are ignored and removed from result.  Can't really do single-spaced line breaks in docblocks.  For the moment, I'm not planning on changing this, but it's possible I might in the future.  I can definitely see a use case for things like examples, but I don't do that myself *that* often.

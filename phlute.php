@@ -1491,10 +1491,10 @@ class DocblockBuilder
         $str = $input;
         $str = trim($str); // Remove whitespace on ends.
 
-        $str = preg_replace('/[\r\n](\s+)?[\r\n]/', "##PARA4672##" . PHP_EOL, $str);
+        $str = preg_replace('/(\n|\r\n)(\s+)?(\n|\r\n)/', "##PARA4672##" . PHP_EOL, $str);
         // Replace paragraph breaks with marker.
-        $str = preg_replace('/[\r\n](\s)+/', '' , $str);
-        // Remove whitespace after line breaks.
+        $str = preg_replace('/(\n|\r\n)(\s)+/', ' ' , $str);
+        // Remove line breaks, replace with single space.
         $paragraphs = explode('##PARA4672##', $str);
         // Break paragraphs into different strings.
 
@@ -1503,7 +1503,7 @@ class DocblockBuilder
 
         foreach ($paragraphs as $ind => $paragraph) {
             while (strlen($paragraph) > 0) {
-                $paragraph = $this->buildDocblockLine($indent . $paragraph);
+                $paragraph = $this->buildDocblockLine($indent . ltrim($paragraph));
 
                 if(strlen($paragraph) < CommonConstants::LENGTH_LESS_THAN) {
                     $outputDum = $paragraph;
