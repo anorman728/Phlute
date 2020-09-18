@@ -624,7 +624,7 @@ class ClassBuilder
                 continue;
             }
 
-            $docBuilder->setDescription($node->textContent);
+            $docBuilder->setDescription(getNodeText($node));
             // Superdocs have no attributes (at least at the moment), so don't
             // bother with adding them.
             $docBuilder->write();
