@@ -954,7 +954,8 @@ class ClassBuilder
         foreach ($propertiesArr as $property) {
             foreach (['setter', 'getter'] as $type) {
                 $attval = $property->getElementNode()->getAttribute($type);
-                if ((!$attval) || $attval = 1) {
+
+                if (($attval == '') || ($attval == 1)) {
                     return true;
                 }
             }
@@ -1854,6 +1855,40 @@ abstract class ElementBuilder
     }
 
     /**
+     * Get the value of a certain attribute or child element's CData,
+     * favoring the CData if both are there.  If neither exist, return
+     * empty string (which is falsey).
+     *
+     * Used for constants and properties, but available to any child class.
+     *
+     * @param   string  $attName
+     *  The name of the attribute or CDATA element we're getting the value of.
+     * @param   int     $indentLvl
+     * @return  string
+     */
+    protected function getAttOrCDataValue(
+        string $attName,
+        int $indentLvl
+    ): string {
+        // Return CDATA, if exists.
+        $defaultEl = getFirstImmediateChildByName(
+            $this->getElementNode(), $attName);
+
+        if (!is_null($defaultEl)) {
+            return extractCDataAsString($defaultEl, $indentLvl);
+        }
+
+        // Without CDATA, return attribute.
+        if (strlen($this->getAttribute($attName)) > 0) {
+            return $this->buildValueString($attName, 'type');
+        }
+
+        // Without either, return empty string.
+        return '';
+
+    }
+
+    /**
      * Build a string of attribute $valueAtt, and if $typeAtt is equal to
      * "string", then wrap it in double quotes.
      *
@@ -1863,8 +1898,10 @@ abstract class ElementBuilder
      * @param   string  $typeAtt
      * @return  string
      */
-    protected function buildValueString(string $valueAtt, string $typeAtt): string
-    {
+    protected function buildValueString(
+        string $valueAtt,
+        string $typeAtt
+    ): string {
         $returnVal = $this->getAttribute($valueAtt);
 
         if ($this->getAttribute($typeAtt) == 'string') {
@@ -1967,8 +2004,10 @@ class PropertyBuilder extends ElementBuilder
         $vis = $this->getVisibility();
         $declaration = "$vis {$stat}\$" . $this->getAttribute('name');
 
-        if (strlen($this->getAttribute('default')) > 0) {
-            $declaration.= ' = ' . $this->buildValueString('default', 'type');
+        $defaultVal = $this->getAttOrCDataValue(
+            'default', $this->getIndentlvl());
+        if ($defaultVal) {
+            $declaration.= ' = ' . $defaultVal;
         }
 
         $declaration.= ';';
@@ -2136,7 +2175,8 @@ class ConstantBuilder extends ElementBuilder
             'const '
             . $this->getAttribute('name')
             . ' = '
-            . $this->buildValueString('value', 'type')
+            //. $this->buildValueString('value', 'type')
+            . $this->getAttOrCDataValue('value', $this->getIndentlvl())
             . ';'
         ;
 
@@ -3203,6 +3243,24 @@ function attributeOrException(DOMNode $node, string $att): string
 
     return $returnVal;
 
+}
+
+/**
+ * Extract a node's CDATA content into a string, delimited by linebreaks
+ * and indents defined by $indentLvl.
+ *
+ * @param   DOMNode     $el
+ * @param   int         $indentLvl
+ * @return  string
+ */
+function extractCDataAsString(DOMNode $el, int $indentLvl): string
+{
+    // This is slapped together, so I wouldn't be too surprised if I need
+    // to change it later.
+    return implode(
+        PHP_EOL . buildIndent($indentLvl),
+        (new CDataHandler($el))->build()
+    );
 }
 
 

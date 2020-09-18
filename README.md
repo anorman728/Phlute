@@ -101,6 +101,8 @@ The `properties` element is a parent element to both `property` and `constant` e
 
 `property` elements will define properties *and* create corresponding public getters and setters.  Required attributes to the element are `type`, `name`, and `doc`.  Optional attributes are `default`, which defines the default value, and `getter` and `setter` attributes (the purpose of which is described below).
 
+In lieu of a `default` attribute, can use a child element named `default`, then use CDATA to define a multiline value (like an array or just a long string).  If you do this, double-quotes won't be put in for strings automatically.  Can do the same with constants, but the name of the child element will be `value` instead of `default`.
+
 The getter and setter can be suppressed by defining an optional `getter` or `setter` attribute and setting it to `0`, like `<property type="int" setter="0" name="nosetter" doc="This property has no setter function."/>
 
 Custom getters and setters can be defined by child elements of the `property` element.  These getters and setters are defined exactly like other methods, but the xml element would be named `getter` or `setter`.
