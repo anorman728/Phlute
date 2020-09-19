@@ -10,6 +10,10 @@ It's basically just a run-of-the-mill code generator.  Documentation is primaril
 
 There is an example in the form of phlute-input.xml.  You call this from the command line with `php phlute.php phlute-input.xml`, except you replace `phlute-input.xml` with whatever you want.  And from \*nix systems, you can make phlute.php executable so you can run it with `./phlute.php`.
 
+# "Installation".
+
+This is not a Composer package (I might submit it once it's more mature), but it's intentionally a single file executable to make it more mobile.  [Here is the direct link to the file](https://raw.githubusercontent.com/anorman728/Phlute/master/phlute.php), and you can download this directly from the terminal using this command: `wget https://raw.githubusercontent.com/anorman728/Phlute/master/phlute.php`.
+
 
 ## A few notes on the XML example:
 
