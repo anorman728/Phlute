@@ -1,0 +1,878 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Example, but also usable, transportable, real-life example of how this is used.  I use this in conjunction with ASPR, because I have model classes that I use frequently but don't want to make an integral part of ASPR. -->
+<!-- vi:set syntax=phml: -->
+<phlute default-output="./src">
+    <macros>
+        <macro name="helper">Helper functions below this line.</macro>
+
+        <!-- Fully-qualified class names, which are useful for `covers` tags. -->
+        <macro name="DbVariableClass">App\Model\DataObject\DbVariable::</macro>
+    </macros>
+
+    <!-- src -->
+    <trait name="PdoTrait" author="Andrew Norman" namespace="App\Model" output="./src/Model">
+        <uses>
+            <use value="Exception"/>
+            <use value="PDO"/>
+            <use value="PDOStatement"/>
+        </uses>
+        <doc>This trait is used to provide wrappers for a PDO object.</doc>
+        <properties>
+            <property name="pdoObj" type="PDO" setter="0">
+                <doc>PDO object, which will be created automatically.</doc>
+                <getter return="PDO" name="pdo">
+                    <doc>Get (build if necessary) PDO object.</doc>
+                    <content><![CDATA[<?
+                        if (is_null($this->pdoObj)) {
+                            $this->pdoObj = $this->buildPdoObj();
+                        }
+
+                        return $this->pdoObj;
+                    ?>]]></content>
+                </getter>
+            </property>
+        </properties>
+        <methods>
+            <public>
+                <method name="dropDb" return="void">
+                    <doc>
+                        Drop database entirely.
+
+                        Will throw an exception if isTest is not true.
+                    </doc>
+                    <content><![CDATA[<?
+                        if (!$GLOBALS['isTest'] ?? false)) {
+                            throw new Exception('Dropping the database is only available in unit testing.');
+                        }
+
+                        // Do nothing if DB doesn't exist.
+                        if (!$this->dbExists()) {
+                            return;
+                        }
+
+                        $stmt = $this->pdo()->prepare($this->qryDropDb());
+                        $this->pdoObj = null; // No longer valid since DB was dropped.
+                        $stmt->execute();
+                    ?>]]></content>
+                </method>
+                <method name="pdoEsc" return="string">
+                    <doc>Since we can't prepare statements for column or table names, it's sometimes best to simply escape anything if these need to be variable.</doc>
+                    <input type="string" name="inputStr"/>
+                    <content><![CDATA[<?
+                        return preg_replace('/[^A-Za-z0-9_]+/', '', $inputStr);
+                    ?>]]></content>
+                </method>
+                <method name="dbSourceFile" return="void">
+                    <doc>Source a *.sql file.  This is *not* something build into PDO, so this actually calls a system call.  This makes it very brittle, but I don't know any other way to do this.</doc>
+                    <input type="string" name="fileName"/>
+                    <throws exception="Exception" desc="If fail to source script for any reason."/>
+                    <content><![CDATA[<?
+                        $dbCreds = getSetting('db_creds');
+                        $baseDir = getSetting('baseDir');
+                        $result = shell_exec("mysel -u{$dbCreds['username']} -p{$dbCreds['password']} -D{$dbCreds['db']} -e \"source {$baseDir}/sqlscripts/$fileName;\"");
+
+                        if (is_null($result)) {
+                            throw new Exception("Failed sourcing $fileName."
+                            . " This could mean that $fileName did not display"
+                            . " output, which should be corrected, or it could"
+                            . " be another failure.");
+                        }
+                    ?>]]></content>
+                </method>
+                <method name="quickQueryFetch" return="array">
+                    <doc>
+                        Quick query with fetch.  Returns the full array.
+
+                        This isn't intended to be a drop-in replacement for using prepare and fetch manually, because there are still useful things you can do wit hthem that you can't do with this.
+                    </doc>
+                    <input type="string" name="qryString"/>
+                    <input type="array" name="params" default="[]" desc="Defaults to empty array."/>
+                    <content><![CDATA[<?
+                        $stmt = $this->quickQuery($qryString, $params);
+
+                        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    ?>]]></content>
+                </method>
+                <method name="quickQuery" return="PDOStatement">
+                    <doc>Quick update (or delete) query function.  Return the PDOStatement object.</doc>
+                    <input type="string" name="qryString"/>
+                    <input type="array" name="params" doc="Defaults to empty array"/>
+                    <content><![CDATA[<?
+                        $stmt = $this->pdo()->prepare($qryString);
+                        $stmt->execute($params);
+
+                        return $stmt;
+                    ?>]]></content>
+                </method>
+            </public>
+            <comment>{{helper}}</comment>
+            <protected>
+                <method name="buildPdoObj" return="PDO">
+                    <doc>Build PDO object to connect to MySQL.</doc>
+                    <input name="selectDb" type="bool" default="true">
+                        <desc>Set to false if don't want to select a particular db.</desc>
+                    </input>
+                    <content><![CDATA[<?
+                        $dbCreds   = getSetting('db_creds');
+                        $host      = $dbCreds['host'];
+                        $db        = $dbCreds['db'];
+                        $username  = $dbCreds['username'];
+                        $password  = $dbCreds['password'];
+
+                        $dsn= "mysql:host=$host";
+                        if ($selectDb) {
+                            $dsn.=";dbname=$db";
+                        }
+
+                        $conn = new PDO($dsn, $username, $password);
+                        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                        // This attribute makes sure an exception is thrown
+                        // if there's an error instead of silently failing.
+
+                        // Todo: Try/catch.
+
+                        return $conn;
+                    ?>]]></content>
+                </method>
+                <method name="dbExists" return="bool" doc="Test if database exists.">
+                    <content><![CDATA[<?
+                        // Don't use pdo(), because don't want to select DB.
+                        $pdoDummy = $this->buildPdoObj(false);
+                        $dbName = getSetting('db_creds')['db'];
+
+                        $stmt = $pdoDummy->prepare($this->qryDbExists());
+
+                        $stmt->execute([
+                            ':dbname' => $dbName,
+                        ]);
+
+                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                        return ($row['count'] > 0);
+                    ?>]]></content>
+                </method>
+            </protected>
+            <private>
+                <method name="qryDropDb" return="string" doc="Query used to drop the database.">
+                    <content><![CDATA[<?
+                        $dbName = getSetting('db_creds')['db'];
+                        return "DROP DATABASE $dbName;"
+                    ?>]]></content>
+                </method>
+                <method name="qryDbExists" return="string" doc="Query used in dbExists.">
+                    <content><![CDATA[<?
+                        return "
+                            SELECT
+                                COUNT(*) as `count`
+                            FROM
+                                INFORMATION_SCHEMA.SCHEMATA
+                            WHERE
+                                SCHEMA_NAME = :dbname
+                        ";
+                    ?>]]></content>
+                </method>
+            </private>
+        </methods>
+    </trait>
+    <class name="BaseModel" author="Andrew Norman" keywords="abstract" namespace="App\Model\TableManager" output="./src/Model/TableManager">
+        <doc>This class is the base class for managing the model.</doc>
+        <uses>
+            <use value="App\Model\PdoTrait"/>
+            <use value="PDO"/>
+        </uses>
+        <traits>
+            <trait value="PdoTrait"/>
+        </traits>
+        <properties>
+            <comment>There was originally more here, but I want to keep it for a common root for table classes.</comment>
+        </properties>
+    </class>
+    <class name="DatabaseUpdates" author="Andrew Norman" extends="BaseModel" namespace="App\Model\TableManager" output="./src/Model/TableManager/">
+        <superdocs>
+            <superdoc>This is a skeleton class that will need updating.</superdoc>
+        </superdocs>
+        <doc>This class is used to both create the database initially and update if a change has been made.</doc>
+        <uses>
+            <use value="PDO"/>
+        </uses>
+        <properties>
+            <constant name="MAX_VERSION" value="0" type="int" doc="Maximum version."/>
+        </properties>
+        <methods>
+            <public>
+                <method name="updateDb" return="void">
+                    <doc>Update (or build) database to latest version.</doc>
+                    <content><![CDATA[<?
+                        // Order is important here!
+
+                        if (!$this->dbExists()) {
+                            $this->buildDbInitial();
+                        }
+
+                        $dbVersion = $this->getDbVersion();
+
+                        // Update this function accordingly when updates
+                        // are needed, for example--
+                        //if ($dbVersion < 1) {
+                        //    $this->updateToVersion001();
+                        //}
+                    ?>]]></content>
+                </method>
+            </public>
+            <comment>{{helper}}</comment>
+            <private>
+                <method name="buildDbInitial" return="void">
+                    <doc>Initial build of database.  Only builds the "db_variables" table, but its primary purpose is actually to create the database.</doc>
+                    <content><![CDATA[<?
+                        // Don't use pdo(), because the database doesn't exist yet.
+                        $pdoDummy = $this->buildPdoObj(false);
+
+                        $stmt = $pdoDummy->prepare($this->qryCreateDb());
+                        $stmt->execute();
+
+                        $stmt = $this->pdo()->prepare($this->qryDbInitial());
+                        $stmt->execute();
+
+                        $stmt = $this->pdo()->prepare($this->qryDbVersionInitial());
+                        $stmt->execute([':newversion' => 0]);
+                    ?>]]></content>
+                </method>
+                <method name="getDbVersion" return="int">
+                    <doc>
+                        Get the version of the database structure.
+
+                        This does not use the DbVariables class to avoid a complex relationship between this class and that (i.e., tight coupling).
+                    </doc>
+                    <content><![CDATA[<?
+                        $stmt = $this->pdo()->query($this->qryGetDbVersion());
+                        $result = $stmt->fetch(PDO::FETCH_ASSOC)['value'];
+
+                        return $result;
+                    ?>]]></content>
+                </method>
+                <method name="updateToVersion001" return="void">
+                    <doc>Create initial database structure.</doc>
+                    <content><![CDATA[<?
+                        $this->dbSourceFile('update_to_version_001.sql');
+                        // Make this sql script if/when need to update database for first time.
+
+                        // Do anything else here that needs to be done for update.
+                    ?>]]></content>
+                </method>
+                <comment>SQL statement functions below this line.</comment>
+                <method name="qryCreateDb" return="string" doc="Query used to create the database.">
+                    <content><![CDATA[<?
+                        $dbName = getSetting('db_creds')['db'];
+                        return "CREATE DATABASE $dbName;";
+                    ?>]]></content>
+                </method>
+                <method name="qryDbInitial" return="string">
+                    <doc>Query usd to create initial version.  (Only creates db_variables table.)</doc>
+                    <content><![CDATA[<?
+                        return "
+                            CREATE TABLE db_variables(
+                                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                                name VARCHAR(100) NOT NULL UNIQUE,
+                                value VARCHAR(100) NOT NULL,
+                                PRIMARY KEY ( id )
+                            );
+                        ";
+                    ?>]]></content>
+                </method>
+                <method name="qryDbVersionInitial" return="string">
+                    <doc>Query to initially set DB version.</doc>
+                    <content><![CDATA[<?
+                        return "INSERT INTO db_variables(name, value) VALUES ('version', :newversion);";
+                    ?>]]></content>
+                </method>
+                <method name="qryGetDbVersion" return="string">
+                    <doc>Query to get DB version.</doc>
+                    <content><![CDATA[<?
+                        return "SELECT value FROM db_variables WHERE name=\"version\";";
+                    ?>]]></content>
+                </method>
+            </private>
+        </methods>
+    </class>
+    <class name="BaseObject" author="Andrew Norman" namespace="App\Model\DataObject" output="./src/Model/DataObject">
+        <doc>This class is the base class of managing a particular row.</doc>
+        <uses>
+            <use value="App\Model\PdoTrait"/>
+            <use value="Exception"/>
+            <use value="PDO"/>
+        </uses>
+        <traits>
+            <trait value="PdoTrait"/>
+        </traits>
+        <properties>
+            <protected>
+                <property type="array" name="properties">
+                    <doc>List of properties, which must be set by child classes.</doc>
+                    <setter name='setProp' return="void" doc="Set a value of a particular property.">
+                        <input name="fieldName" type="string" desc="Name of fieldin Db."/>
+                        <input name="value" desc="Value to set up the property to."/>
+                        <content><![CDATA[<?
+                            $this->checkPropertyName($fieldName);
+
+                            $this->dirty = true;
+                            $this->properties[$fieldName] = $value;
+                        ?>]]></content>
+                    </setter>
+                    <getter name='getProp' return="string" doc="Get a value of a particular property.">
+                        <input name="fieldName" type="string"/>
+                        <content><![CDATA[<?
+                            $this->checkPropertyName($fieldName);
+
+                            return $this->properties[$fieldName);
+                        ?>]]></content>
+                    </getter>
+                </property>
+                <property name="dirty" default="true" type="bool" setter="0">
+                    <doc>True if does not match database, else false.</doc>
+                    <getter name="isDirty" return="bool">
+                        <doc>Return true if object has been changed since pulled from database.</doc>
+                        <content><![CDATA[<?
+                            return $this->dirty;
+                        ?>]]></content>
+                    </getter>
+                </property>
+                <property name="tableName" type="string" setter="0" getter="0">
+                    <doc>Table name that this object belongs to.</doc>
+                </property>
+            </protected>
+        </properties>
+        <methods>
+            <public>
+                <method name="save" return="void">
+                    <doc>
+                        Save a base object to database.  If an ID is not set, then a new row will be created and a new id set.
+
+                        All properties need to be set for this to work.  If need to update just a few fields, do *not* use this, because it would be more efficient to call PDO directly.
+                    </doc>
+                    <content><![CDATA[<?
+                        if (count($this->properties) == 0) {
+                            throw new Exception(get_class($this) . ":: Properties is not set; cannot save.");
+                        }
+
+                        $propDum = $this->properties;
+
+                        $tableName = $this->tableName;
+                        $tableName = $this->pdoEsc($tableName);
+                        if (is_null($propDum['id'])) {
+                            $includeId = false;
+                            $qryDum = $this->qryInsertStatement($tableName);
+                        } else {
+                            $includeId = true;
+                            $qryDum =$this->qryUpdateStatement($tableName);
+                        }
+
+                        $stmt = $this->pdo()->prepare($qryDum);
+                        $stmt->execute($this->prepareValues($includeId));
+
+                        if ($stmt->rowCount() == 0) {
+                            throw new Exception(get_class($this) . ":: No rows were affected by save.");
+                        }
+
+                        if (!$includeId) {
+                            $this->setProp('id', $this->pdo()->lastInsertId());
+                        }
+
+                        $this->dirty = false;
+                    ?>]]></content>
+                </method>
+                <method name="get" return="void" doc="Get a DataObject from the database by id.">
+                    <input type="int" name="id"/>
+                    <content><![CDATA[<?
+                        $tblName = $this->pdoEsc($this->tableName); // Can't prepare statement for table name.
+                        $qry = "SELECT * FROM `$tblName` where id = :id";
+                        $stmt = $this->pdo()->prepare($qry);
+                        $stmt->execute([':id' => $id]);
+
+                        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if (!$result) {
+                            throw new Exception("Cannot find row with id $id for $tblName.");
+                        }
+
+                        foreach ($result as $field => $value) {
+                            $this->checkPropertyName($field);
+                            $this->properties[$field] = $value;
+                        }
+
+                        $this->dirty = false;
+                    ?>]]></content>
+                </method>
+            </public>
+            <comment>{{helper}}</comment>
+            <private>
+                <method name="checkPropertyName" return="void">
+                    <doc>Check if a property exists and throw exception if it doesn't.</doc>
+                    <input type="string" name="fieldName" desc="Name of field in db."/>
+                    <content><![CDATA[<?
+                        if (!array_key_exists($fieldName, $this->properties)) {
+                            throw new Exception(get_class($this) . ":: Property $fieldName does not exist.");
+                        }
+                    ?>]]></content>
+                </method>
+                <method name="qryInsertStatement" return="string">
+                    <doc>Query string for insert statement.</doc>
+                    <input type="string" name="tableName"/>
+                    <content><![CDATA[<?
+                        $fieldNames = $this->getFieldNamesImploded(false);
+                        $valPlace = $this->getPlaceholdersImploded(false);
+                        return "INSERT INTO $tableName($fieldNames) VALUES ($valPlace);";
+                    ?>]]></content>
+                </method>
+                <method name="qryUpdateStatement" return="string">
+                    <doc>Query string for update statement.</doc>
+                    <input type="string" name="tableName"/>
+                    <content><![CDATA[<?
+                        $preparedSet = $this->preparedSet(false);
+                        return "UPDATE $tableName SET $preparedSet WHERE id = :id;";
+                    ?>]]></content>
+                </method>
+                <method name="getFieldNamesImploded" return="string">
+                    <doc>Get all field names imploded with comma delimiters.</doc>
+                    <input type="bool" name="includeId" default="true" doc="Defaults to true."/>
+                    <content><![CDATA[<?
+                        $dumProps = array_keys($this->properties);
+                        if (!$includeId) {
+                            unset($dumProps['id']);
+                        }
+
+                        return implode(',', $dumProps);
+                    ?>]]></content>
+                </method>
+                <method name="getPlaceholdersImploded" return="string">
+                    <doc>Get all placeholders for parameterized values.</doc>
+                    <input type="bool" name="includeId" doc="Defaults to true."/>
+                    <content><![CDATA[<?
+                        return implode(',', $this->getPlaceholders($includeId));
+                    ?>]]></content>
+                </method>
+                <method name="getPlaceholders" return="array">
+                    <doc>Get array of all placeholders (like :username, etc.).</doc>
+                    <input type="bool" name="includeId" default="true"/>
+                    <content><![CDATA[<?
+                        $dumProps = array_keys($this->properties);
+                        if (!$includeId) {
+                            unset($dumProps['id']);
+                        }
+
+                        foreach ($dumProps as $key => $val) {
+                            $dumProps[$key] = ':' . $val;
+                        }
+
+                        return $dumProps;
+                    ?>]]></content>
+                </method>
+                <method name="prepareValues" return="array">
+                    <doc>Get array of all values as preparing to parameters to put into SQL.</doc>
+                    <input type="bool" name="includeId"/>   
+                    <content><![CDATA[<?
+                        $returnArr = [];
+
+                        foreach ($this->properties as $key => $val) {
+                            $returnArr[':' . $key] = $val;
+                        }
+
+                        return $returnArr;
+                    ?>]]></content>
+                </method>
+                <method name="preparedSet" return="string">
+                    <doc>get a prepared set, i.e., username = :username, password_hash = :password_hash, etc.</doc>
+                    <input type="bool" name="includeId" default="false" doc="Defaults to false."/>
+                    <content><![CDATA[<?
+                        $returnArr = [];
+
+                        foreach (array_keys($this->properties) as $key) {
+                            $returnArr[] = "$key = :$key";
+                        }
+
+                        return implode(',', $returnArr);
+                    ?>]]></content>
+                </method>
+                <method name="setMult" return="void">
+                    <doc>Set multiple (up to all) properties by array.</doc>
+                    <input type="array" name="propertiesArr"/>
+                    <content><![CDATA[<?
+                        foreach ($propertiesArr as $key => $val) {
+                            $this->setProp($key, $val);
+                        }
+                    ?>]]></content>
+                </method>
+            </private>
+        </methods>
+    </class>
+    <class name="HtmlPurifierWrapper" namespace="App\Lib" output="./src/Lib">
+        <doc>Static functions for handling purifying HTML.</doc>
+        <superdocs>
+            <superdoc>
+                IMPORTANT: To use HTMLPurifier, need to install it via composer and add the following line to autoload.php:
+
+                include_once(__DIR__ . '/vendor/ezyang/htmlpurifier/library/HTMLPurifier.auto.php');
+
+                It's not loaded like most Composer packages for some reason.
+            </superdoc>
+        </superdocs>
+        <uses>
+            <use value="HTMLPurifier"/>
+            <use value="HTMLPurifier_Config"/>
+        </uses>
+        <properties>
+            <property type="HtmlPurifier" keywords="static" name="htmlPurifier" setter="0" getter="0" doc="HTMLPurifier object."/>
+        </properties>
+        <methods>
+            <public>
+                <method name="purify" return="string" doc="Clean input of a string to prevent XSS attacks.">
+                    <input name="inputStr" type="string" desc="Value to purify"/>
+                    <content><![CDATA[<?
+                        return static::getPurifier()->purify($inputStr);
+                    ?>]]></content>
+                </method>
+            </public>
+            <comment>{{helper}}</comment>
+            <private>
+                <method name="getPurifier" return="HTMLPurifier" keywords="static" doc="Get purifier, and build it if necessary.">
+                    <content><![CDATA[<?
+                        if (!isset(static::$htmlPurifier)) {
+                            $config = HTMLPurifier_Config::createDefault();
+                            static::$htmlPurifier = new HTMLPurifier($config);
+                        }
+
+                        return static::$htmlPurifier;
+                    ?>]]></content>
+                </method>
+            </private>
+        </methods>
+    </class>
+    <class name="DbVariable" author="Andrew Norman" namespace="App\Model\DataObject" output="./src/Model/DataObject" extends="BaseObject">
+        <doc>This represents a data object of a db_variable.</doc>
+        <properties>
+            <protected>
+                <property type="array" name="properties" setter="0" getter="0" doc="{@inheritDoc}">
+                    <default><![CDATA[<?
+                        [
+                            'id'    => null,
+                            'name'  => null,
+                            'value' => null,
+                        ]
+                    ?>]]></default>
+                </property>
+                <property type="string" name="tableName" setter="0" getter="0" doc="{@inheritDoc}" default="db_variables"/>
+            </protected>
+        </properties>
+        <methods>
+            <public>
+                <method name="__construct" return="void">
+                    <doc>
+                        Constructor.  Create a DB variable by name.
+
+                        If this already exists in the database, it pulls the
+                        existing value.  Else it sets value to null and will
+                        save new row on save.
+                    </doc>
+                    <input type="string" name="name"/>
+                    <content><![CDATA[<?
+                        $dumArr = $this->getByName($name);
+                        if (!is_null($dumArr)) {
+                            $this->setMult($dumArr);
+                        } else {
+                            $this->setProp('name', $name);
+                        }
+
+                        $this->dirty = false;
+                    ?>]]></content>
+                </method>
+            </public>
+            <comment>{{helper}}</comment>
+            <private>
+                <method name="getByName" return="?array">
+                    <input name="name" type="string"/>
+                    <doc>Get a db_variable by name.  Null if does not exist.</doc>
+                    <content><![CDATA[<?
+                        $qry = "SELECT * FROM db_variables WHERE name=:name;";
+                        $stmt = $this->pdo()->prepare($qry);
+
+                        if ($stmt->rowCount() == 0) {
+                            return null;
+                        }
+
+                        $return = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                        return $result;
+                    ?>]]></content>
+                </method>
+            </private>
+        </methods>
+    </class>
+
+    <!-- tests -->
+    <class name="BaseFixtures" author="Andrew Norman" namespace="Test\Fixtures" output="./tests/Fixtures">
+        <doc>
+            Base fixture.
+
+            This class can be extended for particular tests, but in most
+            cases it would be easier to go ahead and add records manually
+            in the test.
+        </doc>
+        <uses>
+            <use value="App\Model\PdoTrait"/>
+            <use value="App\Model\TableManager\DatabaseUpdates"/>
+            <use value="Exception"/>
+            <use value="PDO"/>
+        </uses>
+        <traits>
+            <trait value="PdoTrait"/>
+        </traits>
+        <methods>
+            <public>
+                <method name="populate" keywords="static">
+                    <doc>
+                        Static function to populate the db.
+
+                        Default behavior is to simply insert base fixtures,
+                        which are also defined in this class.  Can add more
+                        fixtures defined by $fixtureArr.
+                    </doc>
+                    <input type="array" name="fixtureArr" default="['base']" desc="Defaults to base fixture."/>
+                    <content><![CDATA[<?
+                        $fixObj = new self();
+
+                        $dbUpdates = new DatabaseUpdates();
+                        if ($GLOBALS['isTest'] ?? false) {
+                            // If not running a test, will need to drop the db manually.
+                            $dbUpdates->dropDb();
+                        }
+                        $dbUpdates->updateDb();
+
+                        foreach ($fixtureArr as $fix) {
+                            if (!method_exists($fixObj, $fix)) {
+                                throw new Exception("Found no method \"$fix\" in " . __CLASS__);
+                            }
+                            call_user_func([$fixObj, $fix]);
+                        }
+                    ?>]]></content>
+                </method>
+                <method name="drop" return="void" keywords="static">
+                    <doc>
+                        Static function to drop the db.
+
+                        PdoTrait will throw an exception if not in testing.
+                    </doc>
+                    <content><![CDATA[<?
+                        (new self())->dropDb();
+                    ?>]]></content>
+                </method>
+            </public>
+            <protected>
+                <method name="base" doc="Populate base fixtures."/>
+                <method name="addRow" return="void">
+                    <doc>
+                        Add a row to the defined table.  Useful for
+                        `populate`  method.
+
+                        This takes a "model" row and modifies it based on
+                        $modValues.
+                    </doc>
+                    <input type="string" name="tblName"/>
+                    <input type="array" name="modValues"/>
+                    <content><![CDATA[<?
+                        $qry = call_user_func([$this, "qry$tblName"]);
+
+                        $model = call_user_func([$this, "mdl$tblname"]);
+                        $newrow = array_replace($model, $modValues);
+
+                        $this->quickQuery($qry, $newrow);
+                    ?>]]></content>
+                </method>
+            </protected>
+        </methods>
+    </class>
+    <class name="DbFixtureCase" author="Andrew Norman" extends="TestCase" namespace="Test\Fixtures" output="./tests/Fixtures" keywords="abstract">
+        <doc>Base test case to use for other tests, to make sure that setUp and tearDown functions are consistent across (most) tests.</doc>
+        <uses>
+            <use value="PHPUnit\Framework\TestCase"/>
+            <use value="Test\Fixtures\BaseFixtures"/>
+        </uses>
+        <methods>
+            <comment>
+                Made abstract so PHPUnit doesn't think it's a test.
+
+                There's no reason why PHPUnit should think it *is* a test since the word "test" is found nowhere in the name, but it does anyway.
+            </comment>
+            <public>
+                <method name="setUp" return="void" doc="setUp function.">
+                    <content><![CDATA[<?
+                        BaseFixtures::populate();
+                    ?>]]></content>
+                </method>
+                <method name="tearDown" return="void" doc="tearDown function.">
+                    <content><![CDATA[<?
+                        BaseFixtures::drop();
+                    ?>]]></content>
+                </method>
+            </public>
+        </methods>
+    </class>
+    <class name="DatabaseUpdatesTest" author="Andrew Norman" extends="TestCase" namespace="Test\Model\TableManager" output="./tests/Model/TableManager/">
+        <doc>Test case for DatabaseUpdates class.</doc>
+        <uses>
+            <use value="App\Model\PdoTrait"/>
+            <use value="App\Model\TableManager\DatabaseUpdates"/>
+            <use value="PDO"/>
+            <use value="PHPUnit\Framework\TestCase"/>
+        </uses>
+        <traits>
+            <trait value="PdoTrait"/>
+        </traits>
+        <methods>
+            <public>
+                <method name="setUp" return="void" doc="setUp function.">
+                    <content><![CDATA[<?
+                        // Don't set up base fixtures-- The whole point is to test part of what BaseFixtures does.
+                        (new DatabaseUpdates())->dropDb();
+                    ?>]]></content>
+                </method>
+                <method name="tearDown" return="void" doc="tearDown function.">
+                    <content><![CDATA[<?
+                        (new DatabaseUpdates())->dropDb();
+                    ?>]]></content>
+                </method>
+                <method name="testUpdateDb" return="void">
+                    <doc>Test the updateDb function, testing that able to build from zero to current max.</doc>
+                    <doc-extra>
+                        <attribute name="covers">App\Model\TableManager\DatabaseUpdates::updateDb</attribute>
+                    </doc-extra>
+                    <content><![CDATA[<?
+                        $dbUpdates = new DatabaseUpdates()
+                        $dbUpdates->updateDb();
+
+                        // Assert  that version is up to date.
+                        $qryDum = 'SELECT value FROM db_variables WHERE name="version"';
+                        $pdo = $dbUpdates->pdo();
+                        $stmt = $pdo->prepare($qryDum);
+                        $stmt->execute();
+                        $version = $stmt->fetch(PDO::FETCH_ASSOC)['value'];
+
+                        $this->assertEquals(
+                            DatabaseUpdates::MAX_VERSION,
+                            $version,
+                            'Asserting that version is up to date.'
+                        );
+
+                        // Any more testing than this would be very
+                        // brittle and probably over testing.
+                    ?>]]></content>
+                </method>
+                <!-- Once there's a version 001, will want to add an individual
+                test for updating to that version, and every successive version.
+                -->
+            </public>
+        </methods>
+    </class>
+    <class name="HtmlPurifierWrapperTest" author="Andrew Norman" namespace="Test\Lib" output="./tests/Lib">
+        <doc>Test case for HtmlPurifierWrapper</doc>
+        <uses>
+            <use value="App\Lib\HtmlPurifierWrapper"/>
+            <use value="PHPUnit\Framework\TestCase"/>
+        </uses>
+        <methods>
+            <public>
+                <method name="testPurify" doc="Test purify function." return="void">
+                    <doc-extra>
+                        <attribute name="covers">App\Lib\HtmlPurifierWrapper::purify</attribute>
+                    </doc-extra>
+                    <content><![CDATA[<?
+                        $input = "
+                            <script>alert('This should not happen');</script>
+                            <p>But this is okay.</p>
+                        ";
+
+                        $output = HtmlPurifierWrapper::purify($input);
+
+                        $notRegexp = '/<script>.*This should not happen.*<\/script>/i';
+
+                        $this->assertRegexp(
+                            $notRegexp,
+                            $input,
+                            'Making sure that regexp is valid for testing this string.'
+                        );
+
+                        $this->assertNotRegexp(
+                            $notRegexp,
+                            $output,
+                            'Asserting that script does not appear in output.'
+                        );
+
+                        $this->assertContains(
+                            'But this is okay.'
+                            $output,
+                            'Asserting that safe material does appear in output.'
+                        );
+                    ?>]]></content>
+                </method>
+            </public>
+        </methods>
+    </class>
+    <class name="DbVariablesTest" author="Andrew Norman" extends="DbFixtureCase" namespace="Test\Model\TableManager" output="./tests/Model/DataObject/">
+        <doc>Test case for DbVariable object.</doc>
+        <uses>
+            <use value="App\Model\DataObject\DbVariable"/>
+            <use value="App\Model\TableManager\DatabaseUpdates"/>
+            <use value="PDO"/>
+            <use value="Test\Fixtures\DbFixtureCase"/>
+            <use value="Test\Fixtures\BaseFixtures"/>
+        </uses>
+        <methods>
+            <public>
+                <method name="testSaveNew" return="void">
+                    <doc>Test saving a new DbVariable</doc>
+                    <doc-extra>
+                        <attribute name="covers">{{DbVariableClass}}__construct</attribute>
+                        <attribute name="covers">{{DbVariableClass}}getByName</attribute>
+                    </doc-extra>
+                    <content><![CDATA[<?
+                        $dbVar = new DbVariable('testvar');
+                        $dbVar->setProp('value', 'testing123');
+
+                        $this->assertTrue(
+                            $dbVar->isDirty(),
+                            'Asserting that isDirty returns true when it\'s dirty.'
+                        );
+
+                        $dbVar->save();
+
+                        $this->assertFalse(
+                            $dbVar->isDirty(),
+                            'Asserting that isDirty returns false after it\'s been saved.'
+                        );
+
+                        $id = $dbVar->getProp('id');
+
+                        $this->assertNotNull(
+                            $dbVar->getProp('id'),
+                            'Asserting that ID is set.'
+                        );
+
+                        $pdo = $dbVar->pdo();
+                        $stmt = 'SELECT * FROM db_variables WHERE id = :id';
+                        $stmt = $pdo->prepare($stmt);
+                        $stmt->execute([':id'=> $id]);
+                        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                        $this->assertEquals(
+                            'testvar',
+                            $result['name'],
+                            'Asserting that name is set correctly.'
+                        );
+                        $this->assertEquals(
+                            'testing123',
+                            $result['value'],
+                            'Asserting that value is set correctly.'
+                        );
+                    ?>]]></content>
+                </method>
+            </public>
+        </methods>
+    </class>
+</phlute>
