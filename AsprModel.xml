@@ -201,7 +201,11 @@
         <methods>
             <public>
                 <method name="updateDb" return="void">
-                    <doc>Update (or build) database to latest version.</doc>
+                    <doc>
+                        Update (or build) database to latest version.
+
+                        Will want to call this in routes.php, before any routes are actually built.
+                    </doc>
                     <content><![CDATA[<?
                         // Order is important here!
 
