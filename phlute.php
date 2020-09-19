@@ -2274,8 +2274,8 @@ class MethodBuilder extends ElementBuilder
         }
 
         // Extra attributes.
-        foreach ($this->getExtraAttributes() as $name => $attArr) {
-            $docblock->addAttribute($name, $attArr);
+        foreach ($this->getExtraAttributes() as $attArr) {
+            $docblock->addAttribute($attArr[0], $attArr[1]);
         }
 
         // Return line.
@@ -2302,10 +2302,13 @@ class MethodBuilder extends ElementBuilder
     }
 
     /**
-     * Get all extra attributes going into docblock as an array mapping
-     * name to array of data.
+     * Get all extra attributes going into docblock as an array of arrays.
      *
-     * Return empty array if there are none.
+     * Format of returned array is kind of complex, for example--
+     *
+     * [ [attribute_name, [node_text]], [attribute_name, [node_text]] ]
+     *
+     * Return empty array if there are no extra attributes.
      *
      * @return  array
      */
@@ -2323,7 +2326,7 @@ class MethodBuilder extends ElementBuilder
         }
 
         foreach (getImmediateChildrenByName($extraDoc, 'attribute') as $node) {
-            $returnArr[$node->getAttribute('name')] = [getNodeText($node)];
+            $returnArr[] = [$node->getAttribute('name'), [getNodeText($node)]];
         }
 
         return $returnArr;
