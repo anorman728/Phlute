@@ -774,7 +774,7 @@
             </public>
         </methods>
     </class>
-    <class name="HtmlPurifierWrapperTest" author="Andrew Norman" namespace="Test\Lib" output="./tests/Lib">
+    <class name="HtmlPurifierWrapperTest" author="Andrew Norman" namespace="Test\Lib" output="./tests/Lib" extends="TestCase">
         <doc>Test case for HtmlPurifierWrapper</doc>
         <uses>
             <use value="App\Lib\HtmlPurifierWrapper"/>
@@ -809,7 +809,7 @@
                         );
 
                         $this->assertContains(
-                            'But this is okay.'
+                            'But this is okay.',
                             $output,
                             'Asserting that safe material does appear in output.'
                         );
