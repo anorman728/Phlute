@@ -327,7 +327,7 @@
                         <content><![CDATA[<?
                             $this->checkPropertyName($fieldName);
 
-                            return $this->properties[$fieldName);
+                            return $this->properties[$fieldName];
                         ?>]]></content>
                     </getter>
                 </property>
@@ -748,7 +748,7 @@
                         <attribute name="covers">App\Model\TableManager\DatabaseUpdates::updateDb</attribute>
                     </doc-extra>
                     <content><![CDATA[<?
-                        $dbUpdates = new DatabaseUpdates()
+                        $dbUpdates = new DatabaseUpdates();
                         $dbUpdates->updateDb();
 
                         // Assert  that version is up to date.
