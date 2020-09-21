@@ -41,7 +41,7 @@
                         Will throw an exception if isTest is not true.
                     </doc>
                     <content><![CDATA[<?
-                        if (!$GLOBALS['isTest'] ?? false)) {
+                        if (!$GLOBALS['isTest'] ?? false) {
                             throw new Exception('Dropping the database is only available in unit testing.');
                         }
 
@@ -156,7 +156,7 @@
                 <method name="qryDropDb" return="string" doc="Query used to drop the database.">
                     <content><![CDATA[<?
                         $dbName = getSetting('db_creds')['db'];
-                        return "DROP DATABASE $dbName;"
+                        return "DROP DATABASE $dbName;";
                     ?>]]></content>
                 </method>
                 <method name="qryDbExists" return="string" doc="Query used in dbExists.">
