@@ -693,7 +693,11 @@
         </methods>
     </class>
     <class name="DbFixtureCase" author="Andrew Norman" extends="TestCase" namespace="Test\Fixtures" output="./tests/Fixtures" keywords="abstract">
-        <doc>Base test case to use for other tests, to make sure that setUp and tearDown functions are consistent across (most) tests.</doc>
+        <doc>
+            Base test case to use for other tests, to make sure that setUp and tearDown functions are consistent across (most) tests.
+
+            All tests that use the database (or almost all) need to use this class instead of TestCase directly.
+        </doc>
         <uses>
             <use value="PHPUnit\Framework\TestCase"/>
             <use value="Test\Fixtures\BaseFixtures"/>
