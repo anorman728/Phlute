@@ -69,7 +69,7 @@
                     <content><![CDATA[<?
                         $dbCreds = getSetting('db_creds');
                         $baseDir = getSetting('baseDir');
-                        $result = shell_exec("mysel -u{$dbCreds['username']} -p{$dbCreds['password']} -D{$dbCreds['db']} -e \"source {$baseDir}/sqlscripts/$fileName;\"");
+                        $result = shell_exec("mysql -u{$dbCreds['username']} -p{$dbCreds['password']} -D{$dbCreds['db']} -e \"source {$baseDir}/sqlscripts/$fileName;\"");
 
                         if (is_null($result)) {
                             throw new Exception("Failed sourcing $fileName."
