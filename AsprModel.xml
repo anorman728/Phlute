@@ -683,7 +683,7 @@
                     <content><![CDATA[<?
                         $qry = call_user_func([$this, "qry$tblName"]);
 
-                        $model = call_user_func([$this, "mdl$tblname"]);
+                        $model = call_user_func([$this, "mdl$tblName"]);
                         $newrow = array_replace($model, $modValues);
 
                         $this->quickQuery($qry, $newrow);
