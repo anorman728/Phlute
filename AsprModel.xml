@@ -849,7 +849,7 @@
             </public>
         </methods>
     </class>
-    <class name="DbVariablesTest" author="Andrew Norman" extends="DbFixtureCase" namespace="Test\Model\TableManager" output="./tests/Model/DataObject/">
+    <class name="DbVariablesTest" author="Andrew Norman" extends="DbFixtureCase" namespace="Test\Model\DataObject" output="./tests/Model/DataObject/">
         <doc>Test case for DbVariable object.</doc>
         <uses>
             <use value="App\Model\DataObject\DbVariable"/>
