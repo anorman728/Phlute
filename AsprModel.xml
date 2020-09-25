@@ -62,6 +62,19 @@
                         return preg_replace('/[^A-Za-z0-9_]+/', '', $inputStr);
                     ?>]]></content>
                 </method>
+                <method name="pdoEscArr" return="array">
+                    <doc>Run pdoEsc on all keys and values of an array.</doc>
+                    <input type="array" name="inputArr"/>
+                    <content><![CDATA[<?
+                        $returnArr = [];
+
+                        foreach ($inputArr as $key => $val) {
+                            $returnArr[$this->pdoEsc($key)] = $this->pdoEsc($val);
+                        }
+
+                        return $returnArr;
+                    ?>]]></content>
+                </method>
                 <method name="dbSourceFile" return="void">
                     <doc>Source a *.sql file.  This is *not* something build into PDO, so this actually calls a system call.  This makes it very brittle, but I don't know any other way to do this.</doc>
                     <input type="string" name="fileName"/>
@@ -193,6 +206,7 @@
     <class name="BaseModel" author="Andrew Norman" keywords="abstract" namespace="App\Model\TableManager" output="./src/Model/TableManager">
         <doc>This class is the base class for managing the model.</doc>
         <uses>
+            <use value="App\Lib\Constants\DatabaseFieldConstants"/>
             <use value="App\Model\PdoTrait"/>
             <use value="PDO"/>
         </uses>
@@ -200,8 +214,95 @@
             <trait value="PdoTrait"/>
         </traits>
         <properties>
-            <comment>There was originally more here, but I want to keep it for a common root for table classes.</comment>
+            <protected>
+                <property name="tableName" type="string" getter="0" setter="0">
+                    <doc>Exact name, matching what's in the database.  Set by child classes.</doc>
+                </property>
+            </protected>
         </properties>
+        <methods>
+            <public>
+                <method name="getRecord" return="?array">
+                    <doc>Get a record by id.  Null if DNE.</doc>
+                    <input name="id" type="int"/>
+                    <content><![CDATA[<?
+                        $tblName = $this->pdoEsc($this->tableName);
+                        $qry = "SELECT * FROM {$tblName} WHERE id = :id;";
+
+                        return $this->quickQueryFetch($qry, [':id' => $id])[0] ?? null;
+                    ?>]]></content>
+                </method>
+                <method name="saveRecord" return="int">
+                    <doc>
+                        Save a record, return the id (whether new record or not).
+
+                        (Tables without id fields will need to define their own save method.)
+                    </doc>
+                    <input name="recordData" type="array"/>
+                    <content><![CDATA[<?
+                        if (array_key_exists('id', $recordData)) {
+                            // Already exists in db.
+                            $this->saveRecord_Existing($recordData);
+                            return $recordData['id'];
+                        }
+
+                        return $this->saveRecord_New($recordData);
+                    ?>]]></content>
+                </method>
+            </public>
+            <private>
+                <method name="saveRecord_New" return="int">
+                    <doc>Save a new record and return its id.</doc>
+                    <input name="recordData" type="array"/>
+                    <content><![CDATA[<?
+                        $tblName = $this->pdoEsc($this->tableName);
+                        $recordData = $this->pdoEscArr($recordData);
+                        $params = $this->buildParamArray($recordData);
+
+                        $flds = implode(',', array_keys($recordData));
+                        $hlds = implode(',', array_keys($params));
+
+                        $qry = "INSERT INTO $tblName($flds) VALUES ($hlds)";
+
+                        $this->quickQuery($qry, $params);
+
+                        return $this->pdo()->lastInsertId();
+                    ?>]]></content>
+                </method>
+                <method name="saveRecord_Existing" return="void">
+                    <doc>Save an existing record to database.</doc>
+                    <input name="recordData" type="array"/>
+                    <content><![CDATA[<?
+                        $tblName = $this->pdoEsc($this->tableName);
+                        $recordData = $this->pdoEscArr($recordData);
+                        $params = $this->buildParamArray($recordData); // Important to do this before extracting id.
+
+                        $iddum = $recordData['id'];
+                        unset($recordData['id']);
+
+                        $newvaluesArr = array_map(function($x) { return "$x = :$x"; }, array_keys($recordData));
+                        $newvalues = implode(',', $newvaluesArr);
+
+                        $qry = "UPDATE $tblName SET $newvalues WHERE id = :id;";
+
+                        $this->quickQuery($qry, $params);
+                    ?>]]></content>
+                </method>
+                <method name="buildParamArray" return="array">
+                    <doc>Does nothing more than prepend a ':' to an array's keys.</doc>
+                    <input name="recordData" type="array"/>
+                    <content><![CDATA[<?
+                        $returnArr = [];
+
+                        foreach ($recordData as $key => $value) {
+                            $returnArr[':' . $key] = $value;
+                        }
+
+                        return $returnArr;
+                    ?>]]></content>
+                </method>
+            </private>
+        </methods>
     </class>
     <class name="DatabaseUpdates" author="Andrew Norman" extends="BaseModel" namespace="App\Model\TableManager" output="./src/Model/TableManager/">
         <superdocs>
@@ -315,7 +416,13 @@
         </methods>
     </class>
     <class name="BaseObject" author="Andrew Norman" namespace="App\Model\DataObject" output="./src/Model/DataObject">
-        <doc>This class is the base class of managing a particular row.</doc>
+        <doc>
+            This class is the base class of managing a particular record.
+
+            There are times when it can be very useful, but in general it's
+            probably best to just use the getRecord method in the BaseModel
+            child classes.
+        </doc>
         <uses>
             <use value="App\Lib\Constants\DatabaseFieldsConstants"/>
             <use value="App\Model\PdoTrait"/>
