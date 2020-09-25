@@ -415,13 +415,12 @@
             </private>
         </methods>
     </class>
-    <class name="BaseObject" author="Andrew Norman" namespace="App\Model\DataObject" output="./src/Model/DataObject">
+    <class name="BaseObject" author="Andrew Norman" keywords="abstract" namespace="App\Model\DataObject" output="./src/Model/DataObject">
         <doc>
             This class is the base class of managing a particular record.
 
-            There are times when it can be very useful, but in general it's
-            probably best to just use the getRecord method in the BaseModel
-            child classes.
+            Child classes are for handling rows one-at-a-time and can be
+            constructed from the row.
         </doc>
         <uses>
             <use value="App\Lib\Constants\DatabaseFieldsConstants"/>
@@ -474,6 +473,15 @@
         </properties>
         <methods>
             <public>
+                <method name="__construct" return="void">
+                    <doc>Construct as empty, or with optional array to pre-fill.</doc>
+                    <input name="startingVals" type="?array" desc="Values to prefil object.  By default, empty." default="null"/>
+                    <content><![CDATA[<?
+                        if (!is_null($startingVals)) {
+                            $this->setMult($startingVals);
+                        }
+                    ?>]]></content>
+                </method>
                 <method name="save" return="void">
                     <doc>
                         Save a base object to database.  If an ID is not set, then a new row will be created and a new id set.
@@ -530,6 +538,25 @@
                         }
 
                         $this->dirty = false;
+                    ?>]]></content>
+                </method>
+                <method name="setMult" return="void">
+                    <doc>Set multiple (up to all) properties by array.</doc>
+                    <input type="array" name="propertiesArr"/>
+                    <content><![CDATA[<?
+                        foreach ($propertiesArr as $key => $val) {
+                            $this->setProp($key, $val);
+                        }
+                    ?>]]></content>
+                </method>
+                <method name="toArray" return="array">
+                    <doc>Return the properties array, as if it had just been pulled from the database.</doc>
+                    <content><![CDATA[<?
+                        if (is_null($this->properties)) {
+                            throw new Exception("Properties are not set.");
+                        }
+
+                        return $this->properties;
                     ?>]]></content>
                 </method>
             </public>
@@ -614,7 +641,7 @@
                 </method>
                 <method name="prepareValues" return="array">
                     <doc>Get array of all values as preparing to parameters to put into SQL.</doc>
-                    <input type="bool" name="includeId"/>   
+                    <input type="bool" name="includeId"/>
                     <content><![CDATA[<?
                         $returnArr = [];
 
@@ -636,15 +663,6 @@
                         }
 
                         return implode(',', $returnArr);
-                    ?>]]></content>
-                </method>
-                <method name="setMult" return="void">
-                    <doc>Set multiple (up to all) properties by array.</doc>
-                    <input type="array" name="propertiesArr"/>
-                    <content><![CDATA[<?
-                        foreach ($propertiesArr as $key => $val) {
-                            $this->setProp($key, $val);
-                        }
                     ?>]]></content>
                 </method>
             </private>
@@ -694,16 +712,50 @@
     </class>
     <class name="DbVariable" author="Andrew Norman" namespace="App\Model\DataObject" output="./src/Model/DataObject" extends="BaseObject">
         <doc>This represents a data object of a db_variable.</doc>
+        <uses>
+            <use value="Exception"/>
+        </uses>
         <properties>
             <protected>
                 <property type="string" name="tableName" setter="0" getter="0" doc="{@inheritDoc}" default="db_variables"/>
             </protected>
+            <private>
+                <property type="bool" name="stopstart" setter="0" getter="0" keywords="static" default="false">
+                    <doc>If true, stop constructor from running.  Used to make sure static factory methods are used instead.</doc>
+                </property>
+            </private>
         </properties>
         <methods>
             <public>
                 <method name="__construct" return="void">
+                    <doc>Override constructor to make sure it's not called directly.</doc>
+                    <input name="startingVals" type="?array" default="null"/>
+                    <content><![CDATA[<?
+                        if (static::$stopstart) {
+                            throw new Exception('Cannot instantiate DbVariable class directly.  Use a static factory method instead.');
+                        }
+
+                        parent::__construct();
+                    ?>]]></content>
+                </method>
+                <method name="buildByName" keywords="static">
+                    <doc>Build an object by name.</doc>
+                    <input name="name" type="string"/>
+                    <content><![CDATA[<?
+                        static::$stopstart = false;
+
+                        $obj = new self();
+                        $obj->_buildByName($name);
+
+                        static::$stopstart = true;
+
+                        return $obj;
+                    ?>]]></content>
+                </method>
+                <method name="_buildByName" return="void">
                     <doc>
-                        Constructor.  Create a DB variable by name.
+                        Create a DB variable by name.  Intended to be called by
+                        the static function `buildByName`.
 
                         If this already exists in the database, it pulls the
                         existing value.  Else it sets value to null and will
@@ -711,6 +763,10 @@
                     </doc>
                     <input type="string" name="name"/>
                     <content><![CDATA[<?
+                        if (static::$stopstart) {
+                            throw new Exception('This function is not intended to be called directly.');
+                        }
+
                         $dumArr = $this->getByName($name);
                         if (!is_null($dumArr)) {
                             $this->setMult($dumArr);
@@ -971,10 +1027,12 @@
                     <doc>Test saving a new DbVariable</doc>
                     <doc-extra>
                         <attribute name="covers">{{DbVariableClass}}__construct</attribute>
+                        <attribute name="covers">{{DbVariableClass}}_buildByName</attribute>
+                        <attribute name="covers">{{DbVariableClass}}buildByName</attribute>
                         <attribute name="covers">{{DbVariableClass}}getByName</attribute>
                     </doc-extra>
                     <content><![CDATA[<?
-                        $dbVar = new DbVariable('testvar');
+                        $dbVar = DbVariable::buildByName('testvar');
                         $dbVar->setProp('value', 'testing123');
 
                         $this->assertTrue(
@@ -1012,6 +1070,17 @@
                             $result['value'],
                             'Asserting that value is set correctly.'
                         );
+                    ?>]]></content>
+                </method>
+                <method name="testDirectInstantiation" return="void">
+                    <doc>Test that directly instantiating the class throws an exception.</doc>
+                    <doc-extra>
+                        <attribute name="covers">{{DbVariableClass}}__construct</attribute>
+                        <attribute name="expectedException">Exception</attribute>
+                        <attribute name="expectedExceptionMessage">Cannot instantiate DbVariable class directly</attribute>
+                    </doc-extra>
+                    <content><![CDATA[<?
+                        new DbVariable();
                     ?>]]></content>
                 </method>
             </public>
