@@ -206,7 +206,7 @@
     <class name="BaseModel" author="Andrew Norman" keywords="abstract" namespace="App\Model\TableManager" output="./src/Model/TableManager">
         <doc>This class is the base class for managing the model.</doc>
         <uses>
-            <use value="App\Lib\Constants\DatabaseFieldConstants"/>
+            <use value="App\Lib\Constants\DatabaseFieldsConstants"/>
             <use value="App\Model\PdoTrait"/>
             <use value="PDO"/>
         </uses>
@@ -810,6 +810,7 @@
             in the test.
         </doc>
         <uses>
+            <use value="App\Lib\Constants\DatabaseFieldsConstants"/>
             <use value="App\Model\PdoTrait"/>
             <use value="App\Model\TableManager\DatabaseUpdates"/>
             <use value="Exception"/>
@@ -871,12 +872,24 @@
                     <input type="string" name="tblName"/>
                     <input type="array" name="modValues"/>
                     <content><![CDATA[<?
-                        $qry = call_user_func([$this, "qry$tblName"]);
+                        $qry = $this->qryGeneric($tblName);
 
                         $model = call_user_func([$this, "mdl$tblName"]);
                         $newrow = array_replace($model, $modValues);
 
                         $this->quickQuery($qry, $newrow);
+                    ?>]]></content>
+                </method>
+                <method name="qryGeneric" return="string">
+                    <doc>Query for inserting row into any table.</doc>
+                    <input name="tblName" type="string"/>
+                    <content><![CDATA[<?
+                        $columns = DatabaseFieldsConstants::TABLES[$tblName];
+
+                        $columnsStr = implode(',', $columns);
+                        $valuesStr = implode(',', array_map(function($x) { return ":$x"; }, $columns);
+
+                        return "INSERT INTO {$tblname}({$columnsStr}) VALUES({$valuesStr});";
                     ?>]]></content>
                 </method>
             </protected>
