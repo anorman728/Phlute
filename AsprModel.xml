@@ -698,6 +698,7 @@
         <doc>This represents a data object of a db_variable.</doc>
         <uses>
             <use value="Exception"/>
+            <use value="PDO"/>
         </uses>
         <properties>
             <protected>
@@ -770,6 +771,7 @@
                     <content><![CDATA[<?
                         $qry = "SELECT * FROM db_variables WHERE name=:name;";
                         $stmt = $this->pdo()->prepare($qry);
+                        $stmt->execute([':name' => $name]);
 
                         if ($stmt->rowCount() == 0) {
                             return null;
@@ -777,7 +779,7 @@
 
                         $return = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                        return $result;
+                        return $return;
                     ?>]]></content>
                 </method>
             </private>
