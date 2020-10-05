@@ -30,6 +30,8 @@ All testing is manual, but there are scripts that help.  There's not a whole lot
 
 I do everything in Linux systems, so sorry if it doesn't work as well for Windows systems.
 
+Heredocs and nowdocs are nodocs. ...That means that they don't work so well here.  But they may in the future.
+
 Why is it called "Phlute"?  Because I'm terrible at naming things.
 
 
