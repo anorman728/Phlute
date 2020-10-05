@@ -432,9 +432,6 @@
             <trait value="PdoTrait"/>
         </traits>
         <properties>
-            <private>
-                <property type="bool" name="propertiesAreBuilt" default="false" setter="0" getter="0" doc="True if $this->properties has been built already."/>
-            </private>
             <protected>
                 <property type="array" name="properties">
                     <doc>List of properties, which must be set by child classes.</doc>
@@ -499,7 +496,7 @@
 
                         $tableName = $this->tableName;
                         $tableName = $this->pdoEsc($tableName);
-                        if (is_null($propDum['id'])) {
+                        if (is_null($propDum['id'] ?? null)) {
                             $includeId = false;
                             $qryDum = $this->qryInsertStatement($tableName);
                         } else {
@@ -568,25 +565,10 @@
                     <doc>Check if a property exists and throw exception if it doesn't.</doc>
                     <input type="string" name="fieldName" desc="Name of field in db."/>
                     <content><![CDATA[<?
-                        $this->buildProperties();
-
-                        if (!array_key_exists($fieldName, $this->properties)) {
+                        $checkArr = DatabaseFieldsConstants::TABLES[$this->tableName];
+                        if (!in_array($fieldName, $checkArr)) {
                             throw new Exception(get_class($this) . ":: Property $fieldName does not exist.");
                         }
-                    ?>]]></content>
-                </method>
-                <method name="buildProperties" return="void">
-                    <doc>Build the object's properties, but do nothing if already built.</doc>
-                    <content><![CDATA[<?
-                        if ($this->propertiesAreBuilt) {
-                            return;
-                        }
-
-                        foreach (DatabaseFieldsConstants::TABLES[$this->tableName] as $field) {
-                            $this->properties[$field] = null;
-                        }
-
-                        $this->propertiesAreBuilt = true;
                     ?>]]></content>
                 </method>
                 <method name="qryInsertStatement" return="string">
