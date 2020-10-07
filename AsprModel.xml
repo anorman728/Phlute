@@ -817,14 +817,17 @@
                     </doc>
                     <input type="array" name="fixtureArr" default="['base']" desc="Defaults to base fixture."/>
                     <content><![CDATA[<?
-                        $fixObj = new self();
-
-                        $dbUpdates = new DatabaseUpdates();
-                        if ($GLOBALS['isTest'] ?? false) {
-                            // If not running a test, will need to drop the db manually.
-                            $dbUpdates->dropDb();
+                        if (!FixtureGlobals::$isBuilt) {
+                            $dbUpdates = new DatabaseUpdates();
+                            if ($GLOBALS['isTest'] ?? false) {
+                                // If not running a test, will need to drop the db manually.
+                                $dbUpdates->dropDb();
+                            }
+                            $dbUpdates->updateDb();
+                            FixtureGlobals::$isBuilt = true;
                         }
-                        $dbUpdates->updateDb();
+
+                        $fixObj = new self();
 
                         foreach ($fixtureArr as $fix) {
                             if (!method_exists($fixObj, $fix)) {
@@ -838,10 +841,24 @@
                     <doc>
                         Static function to drop the db.
 
-                        PdoTrait will throw an exception if not in testing.
+                        Throw an exception if not in testing.
                     </doc>
+                    <throws exception="Exception">If not testing.</throws>
                     <content><![CDATA[<?
-                        (new self())->dropDb();
+                        if (!$GLOBALS['isTest'] ?? false) {
+                            throw new Exception('Dropping all records is only available in unit'
+                            . ' testing.');
+                        }
+
+                        $fixObj = new self();
+
+                        foreach (array_keys(DatabaseFieldsConstants::TABLES) as $table) O{
+                            if ($table == 'db_variables') {
+                                continue;
+                            }
+                            $tableClean = $fixObj->pdoEsc($table);
+                            $fixObj->quickQuery("DELETE FROM $tableClean;", []);
+                        }
                     ?>]]></content>
                 </method>
                 <method name="base" doc="Populate base fixtures."/>
@@ -911,6 +928,16 @@
             </public>
         </methods>
     </class>
+    <class name="FixtureGlobals" author="Andrew Norman" namespace="Test\Fixtures" output="./tests/Fixtures">
+        <doc>"Global" variables in fixtures (because I couldn't think of a better name).</doc>
+        <properties>
+            <public>
+                <property name="isBuilt" getter="0" setter="0" keywords="static" type="bool" default="false">
+                    <doc>Determine if a database is built.  Starts as false at beginning of test.</doc>
+                </property>
+            </public>
+        </properties>
+    </class>
     <class name="DatabaseUpdatesTest" author="Andrew Norman" extends="TestCase" namespace="Test\Model\TableManager" output="./tests/Model/TableManager/">
         <doc>Test case for DatabaseUpdates class.</doc>
         <uses>
@@ -918,6 +945,7 @@
             <use value="App\Model\TableManager\DatabaseUpdates"/>
             <use value="PDO"/>
             <use value="PHPUnit\Framework\TestCase"/>
+            <use value="Test\Fixtures\FixtureGlobals"/>
         </uses>
         <traits>
             <trait value="PdoTrait"/>
@@ -933,6 +961,9 @@
                 <method name="tearDown" return="void" doc="tearDown function.">
                     <content><![CDATA[<?
                         (new DatabaseUpdates())->dropDb();
+
+                        // This destroyed the database, so need to reset $isBuilt.
+                        FixtureGlobals::$isBuilt = false;
                     ?>]]></content>
                 </method>
                 <method name="testUpdateDb" return="void">
