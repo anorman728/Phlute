@@ -791,9 +791,11 @@
         <doc>
             Base fixture.
 
-            This class can be extended for particular tests, but in most
-            cases it would be easier to go ahead and add records manually
-            in the test.
+            The static `populate` method is fairly powerful.  The `base` method is called by default, but you can add other methods, so that with specific tests you only populate certain records.  This is useful for organizing different fixture data for different tests.
+
+            E.g., one test may call `populate(['base', 'std_pages'])`, and another may call `populate(['base', 'back_pages', 'std_vehicles'])`, where the values in the arrays are all names of methods in this class that (presumably) add records to fixtures, so they can be chosen dynamically by different tests that call BaseFixtures.
+
+            Additionally, fixtures can be further organized by extending BaseFixtures (hence the "Base" in the name of the class), so that some tests can use alternate versions of this.  (If you do that, probably best not to override the "populate" or "drop" method, because that could cause unpredictable results.)
         </doc>
         <uses>
             <use value="App\Lib\Constants\DatabaseFieldsConstants"/>
@@ -903,6 +905,10 @@
             Base test case to use for other tests, to make sure that setUp and tearDown functions are consistent across (most) tests.
 
             All tests that use the database (or almost all) need to use this class instead of TestCase directly.
+
+            If it not necessary to use this class to use the fixtures, and there are times when it's not prudent to do so.  This is just an easy way to involve setUp and tearDown.
+
+            Even when extending this class, it may be good to override setUp to pass a different array argument to the `populate` method, or use a different Fixture class altogether.
         </doc>
         <uses>
             <use value="PHPUnit\Framework\TestCase"/>
