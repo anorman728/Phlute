@@ -1048,17 +1048,25 @@
             </public>
         </methods>
     </class>
-    <class name="DbVariablesTest" author="Andrew Norman" extends="DbFixtureCase" namespace="Test\Model\DataObject" output="./tests/Model/DataObject/">
+    <class name="DbVariablesTest" author="Andrew Norman" extends="TestCase" namespace="Test\Model\DataObject" output="./tests/Model/DataObject/">
         <doc>Test case for DbVariable object.</doc>
+        <superdocs>
+            <superdoc>Note: Not extending DbFixtureCase to speed up unit tests, because not all tests here need the database.</superdoc>
+        </superdocs>
         <uses>
             <use value="App\Model\DataObject\DbVariable"/>
             <use value="App\Model\TableManager\DatabaseUpdates"/>
             <use value="PDO"/>
-            <use value="Test\Fixtures\DbFixtureCase"/>
+            <use value="PHPUnit\Framework\TestCase"/>
             <use value="Test\Fixtures\BaseFixtures"/>
         </uses>
         <methods>
             <public>
+                <method name="tearDown" return="void" doc="tearDown function.">
+                    <content><![CDATA[<?
+                        BaseFixtures::drop(); // If DB exists, drop it.
+                    ?>]]></content>
+                </method>
                 <method name="testSaveNew" return="void">
                     <doc>Test saving a new DbVariable</doc>
                     <doc-extra>
@@ -1068,6 +1076,7 @@
                         <attribute name="covers">{{DbVariableClass}}getByName</attribute>
                     </doc-extra>
                     <content><![CDATA[<?
+                        BaseFixtures::populate();
                         $dbVar = DbVariable::buildByName('testvar');
                         $dbVar->setProp('value', 'testing123');
 
