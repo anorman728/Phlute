@@ -62,14 +62,14 @@
                         return preg_replace('/[^A-Za-z0-9_]+/', '', $inputStr);
                     ?>]]></content>
                 </method>
-                <method name="pdoEscArr" return="array">
-                    <doc>Run pdoEsc on all keys and values of an array.</doc>
+                <method name="pdoEscArrKeys" return="array">
+                    <doc>Run pdoEsc on all keys of an array.</doc>
                     <input type="array" name="inputArr"/>
                     <content><![CDATA[<?
                         $returnArr = [];
 
                         foreach ($inputArr as $key => $val) {
-                            $returnArr[$this->pdoEsc($key)] = $this->pdoEsc($val);
+                            $returnArr[$this->pdoEsc($key)] = $val;
                         }
 
                         return $returnArr;
@@ -256,7 +256,7 @@
                     <input name="recordData" type="array"/>
                     <content><![CDATA[<?
                         $tblName = $this->pdoEsc($this->tableName);
-                        $recordData = $this->pdoEscArr($recordData);
+                        $recordData = $this->pdoEscArrKeys($recordData);
                         $params = $this->buildParamArray($recordData);
 
                         $flds = implode(',', array_keys($recordData));
@@ -274,7 +274,7 @@
                     <input name="recordData" type="array"/>
                     <content><![CDATA[<?
                         $tblName = $this->pdoEsc($this->tableName);
-                        $recordData = $this->pdoEscArr($recordData);
+                        $recordData = $this->pdoEscArrKeys($recordData);
                         $params = $this->buildParamArray($recordData); // Important to do this before extracting id.
 
                         $iddum = $recordData['id'];
@@ -819,17 +819,20 @@
                     </doc>
                     <input type="array" name="fixtureArr" default="['base']" desc="Defaults to base fixture."/>
                     <content><![CDATA[<?
+                        $fixObj = new static();
+
                         if (!FixtureGlobals::$isBuilt) {
+                            $fixObj->checkModels();
+
                             $dbUpdates = new DatabaseUpdates();
                             if ($GLOBALS['isTest'] ?? false) {
                                 // If not running a test, will need to drop the db manually.
                                 $dbUpdates->dropDb();
                             }
                             $dbUpdates->updateDb();
+
                             FixtureGlobals::$isBuilt = true;
                         }
-
-                        $fixObj = new self();
 
                         foreach ($fixtureArr as $fix) {
                             if (!method_exists($fixObj, $fix)) {
@@ -852,7 +855,7 @@
                             . ' testing.');
                         }
 
-                        $fixObj = new self();
+                        $fixObj = new static();
 
                         foreach (array_keys(DatabaseFieldsConstants::TABLES) as $table) O{
                             if ($table == 'db_variables') {
@@ -863,6 +866,36 @@
                         }
                     ?>]]></content>
                 </method>
+                <method name="checkModels" return="void">
+                    <doc>Check the mdl_xyz methods to make sure that they contain all database fields.</doc>
+                    <throws exception="Exception" desc="If missing (or adding) a field."/>
+                    <!-- The content could technically do with a refactor, because it's a long function, but at the moment I'm not interested enough in doing that. -->
+                    <content><![CDATA[<?
+                        $methods = array_filter(
+                            get_class_methods($this),
+                            function($x) { return substr($x, 0, 4) == 'mdl_'; }
+                        );
+
+                        foreach ($methods as $method) {
+                            $tblName = substr($method, 4);
+
+                            $expectedFields = DatabaseFieldsConstants::TABLES[$tblName];
+
+                            $receivedFields = array_map(
+                                function($x) { return trim($x, ':'); },
+                                array_keys(call_user_func([$this, $method]))
+                            );
+
+                            $diff = array_diff($expectedFields, $receivedFields);
+
+                            if ($diff) {
+                                throw new Exception("Difference between model function '$method' and"
+                                . " DatabaseFieldsConstants:" . print_r($diff, true));
+                            }
+                        }
+                    ?>]]></content>
+                </method>
+                <comment>Population methods below (the names being passed to populate when desired).</comment>
                 <method name="base" doc="Populate base fixtures."/>
             </public>
             <protected>
@@ -879,7 +912,7 @@
                     <content><![CDATA[<?
                         $qry = $this->qryGeneric($tblName);
 
-                        $model = call_user_func([$this, "mdl$tblName"]);
+                        $model = call_user_func([$this, "mdl_$tblName"]);
                         $newrow = array_replace($model, $modValues);
 
                         $this->quickQuery($qry, $newrow);
