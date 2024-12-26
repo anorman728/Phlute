@@ -76,7 +76,7 @@
                     ?>]]></content>
                 </method>
                 <method name="dbSourceFile" return="void">
-                    <doc>Source a *.sql file.  This is *not* something build into PDO, so this actually calls a system call.  This makes it very brittle, but I don't know any other way to do this.</doc>
+                    <doc>Source a *.sql file.  This is *not* something built into PDO, so this actually calls a system call.  This makes it very brittle, but I don't know any other way to do this.</doc>
                     <input type="string" name="fileName"/>
                     <throws exception="Exception" desc="If fail to source script for any reason."/>
                     <content><![CDATA[<?
@@ -470,7 +470,7 @@
         </properties>
         <methods>
             <public>
-                <method name="__construct" return="void">
+                <method name="__construct">
                     <doc>Construct as empty, or with optional array to pre-fill.</doc>
                     <input name="startingVals" type="?array" desc="Values to prefil object.  By default, empty." default="null"/>
                     <content><![CDATA[<?

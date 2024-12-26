@@ -2423,9 +2423,10 @@ class MethodBuilder extends ElementBuilder
      */
     private function enforceReturnType(string $type): bool
     {
-        if ($type == 'void') {
-            return false;
-        }
+        //if ($type == 'void') {
+        //    return false;
+        //}
+        // Looks like PHP now wants us to declare these.
 
         if (strlen($type) == 0) {
             return false;

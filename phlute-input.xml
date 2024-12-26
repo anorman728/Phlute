@@ -33,7 +33,7 @@
         </properties>
         <methods>
             <public>
-                <method return="void" name="__construct">
+                <method name="__construct">
                     <doc>The constructor.</doc>
                     <input type="string" name="name" desc='The name'/>
                 </method>
